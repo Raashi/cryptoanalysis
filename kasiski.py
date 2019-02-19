@@ -69,23 +69,30 @@ def find_seqs(enc, length) -> list:
         if seq not in seqs:
             seqs[seq] = []
         seqs[seq].append(idx)
-    return [(key, seqs[key]) for key in filter(lambda k: len(seqs[k]) > 1, seqs)]
+    # отсекаем единичные вхождения, считаем нод
+    res = [(key, seqs[key], gcd(seqs[key])) for key in filter(lambda k: len(seqs[k]) > 1, seqs)]
+    # отсекаем НОД == 1
+    res = list(filter(lambda el: el[2] != 1, res))
+    # находим максимальное количество вхождений
+    max_entry = max(map(lambda el: len(el[1]), res))
+    # отсекаем строки, которые входили более чем max_entry/2 раз
+    res = list(filter(lambda el: len(el[1]) > max_entry // 2, res))
+    # сортируем по числу вхождений
+    res.sort(key=lambda el: len(el[1]), reverse=True)
+    return res
 
 
 def kasiski(enc):
-    seqs = find_seqs(enc, 4)
-    seqs.sort(key=lambda el: len(el[1]), reverse=True)
-    dists = []
-    for (key, seq) in seqs:
-        ds = []
-        for seq_l, seq_n in zip(seq[:-1], seq[1:]):
-            ds.append(seq_n - seq_l)
-        seq_gcd = gcd(ds)
-        if seq_gcd > 1:
-            dists.append((key, ds, seq_gcd))
-            print('SEQ: {} | GCD: {}'.format(key, seq_gcd))
-    res = gcd(map(lambda triple: triple[2], dists))
-    return res
+    seqs = find_seqs(enc, 5)
+    # словарь: возможная длиная ключа -> число последовательностей, которые ее дают | число вхождений, которые ее дают
+    possible = {}
+    for (key, seq, seq_gcd) in reversed(seqs):
+        if seq_gcd not in possible:
+            possible[seq_gcd] = [0, 0]
+        possible[seq_gcd][0] += 1
+        possible[seq_gcd][1] += len(seq)
+    for (entry, (seq_count, seq_amount)) in sorted(possible.items(), key=lambda el: el[0]):
+        print('Длина: {:>3} | Число строк: {:>3} | Число вхождений: {}'.format(entry, seq_count, seq_amount))
 
 
 def main():
@@ -112,8 +119,7 @@ def main():
         write_text('dec.txt', dec, next_lines)
     elif op == 'kas':
         enc, _ = read_text(argv[2])
-        length = kasiski(enc)
-        print('Предполагаемая длина ключа: {}'.format(length))
+        kasiski(enc)
     else:
         print('ОШИБКА: неверная операция')
 
