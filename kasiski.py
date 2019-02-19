@@ -83,6 +83,8 @@ def find_seqs(enc, length) -> list:
 
 
 def kasiski(enc):
+    print('Количество анализируемых символов: {}'.format(len(enc)))
+    print('Первые 20 символов: {}'.format(enc[:20]))
     seqs = find_seqs(enc, 5)
     # словарь: возможная длиная ключа -> число последовательностей, которые ее дают | число вхождений, которые ее дают
     possible = {}
@@ -93,6 +95,27 @@ def kasiski(enc):
         possible[seq_gcd][1] += len(seq)
     for (entry, (seq_count, seq_amount)) in sorted(possible.items(), key=lambda el: el[0]):
         print('Длина: {:>3} | Число строк: {:>3} | Число вхождений: {}'.format(entry, seq_count, seq_amount))
+
+
+def _brute(length, container: list, idx_cur):
+    free = [idx for idx in range(length) if idx not in container + [idx_cur, 0]]
+    for idx_next in free:
+        container[idx_cur] = idx_next
+        if container.count(None) > 1:
+            yield from _brute(length, container, idx_next)
+        else:
+            container[idx_next] = 0
+            yield container
+            container[idx_next] = None
+    container[idx_cur] = None
+
+
+def brute(length):
+    container = [None] * length
+    for key in _brute(length, container, 0):
+        if not check_mono_key(key):
+            print('ОШИБКА: неверно сгенерирован ключ длины {}: {}'.format(length, str_key(key)))
+        print(str_key(key))
 
 
 def main():
@@ -120,6 +143,9 @@ def main():
     elif op == 'kas':
         enc, _ = read_text(argv[2])
         kasiski(enc)
+    elif op == 'brute':
+        length = int(argv[2])
+        brute(length)
     else:
         print('ОШИБКА: неверная операция')
 
