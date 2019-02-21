@@ -56,11 +56,14 @@ def read_samples(fn):
 
 
 def write_answers(results, titles):
-    align = max(map(lambda title: len(title), titles)) + 5
-    print('{} {:^{align}} {:^{align}} {:^{align}}'.format(' ' * 8, *titles, align=align))
+    precision = 3
+    align = max(map(lambda title: len(title), titles)) + 4
+    print('{}    {:<{align}} {:<{align}} {:<{align}}'.format(' ' * 8, *titles, align=align))
     for idx in range(4):
-        print('Пример {} {:^{align}} {:^{align}} {:^{align}}'
-              .format(idx, results[0][idx], results[1][idx], results[2][idx], align=align))
+        print('Пример {}    {:<{align}} {:<{align}} {:<{align}}'
+              .format(idx, round(results[0][idx], precision),
+                      round(results[1][idx], precision),
+                      round(results[2][idx], precision), align=align))
 
 
 def _eindex(seq1, seq2):
@@ -70,8 +73,21 @@ def _eindex(seq1, seq2):
 def eindex(fn):
     samples = read_samples(fn)
     results = {key: [_eindex(sample[0], sample[1]) for sample in samples[key]] for key in samples}
-    results = [results['rand'], results['rus'], results['eng']]
-    write_answers(results, ['I(y, z) × 100 случ', 'I(y, z) × 100 англ', 'I(y, z) × 100 рус'])
+    results = [results['rand'], results['eng'], results['rus']]
+    write_answers(results, ['I(y,z)×100 случ', 'I(y,z)×100 англ', 'I(y,z)×100 рус'])
+
+
+def _meindex(seq1, seq2):
+    length = len(seq1)
+    alph = rus_alph if any(seq1.count(letter) for letter in rus_alph) else eng_alph
+    return sum(seq1.count(letter) * seq2.count(letter) * (length ** -2) for letter in alph)
+
+
+def meindex(fn):
+    samples = read_samples(fn)
+    results = {key: [_meindex(sample[0], sample[1]) for sample in samples[key]] for key in samples}
+    results = [results['rand'], results['eng'], results['rus']]
+    write_answers(results, ['Iср(y,z)×100 случ', 'Iср(y,z)×100 англ', 'Iср(y,z)×100 рус'])
 
 
 def main():
@@ -81,6 +97,8 @@ def main():
         gen_samples(100 if len(argv) < 3 else int(argv[2]))
     elif op == 'eindex':
         eindex(argv[2])
+    elif op == 'meindex':
+        meindex(argv[2])
     else:
         print('ОШИБКА: неверный код операции')
 
