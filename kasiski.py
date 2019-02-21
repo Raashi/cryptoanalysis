@@ -1,8 +1,7 @@
 from sys import argv, exit
 from random import choice
 
-from utils import read_text, write_text, rus_alph
-from mutils import gcd
+from utils import read_text, write_text, rus_alph, gcd
 
 
 def str_key(key):

@@ -2,6 +2,8 @@ from sys import argv
 from os import mkdir
 from os.path import basename, exists, join, dirname
 
+from math import gcd as _gcd
+
 
 if __name__ != '__main__' and dirname(__file__) == dirname(argv[0]):
     DIR_MODULE = '_' + basename(argv[0])[:-3]
@@ -50,6 +52,20 @@ def write_text(fn, content, next_lines, *args):
     for idx, c in next_lines:
         content = content[:idx] + c + content[idx:]
     write(fn, content, *args)
+
+
+#    MATHEMATICS
+
+
+def gcd(a, *other):
+    if hasattr(a, '__iter__') or hasattr(a, '__next__'):
+        container = list(a)
+    else:
+        container = [a] + list(other)
+    res = container[0]
+    for b in container[1:]:
+        res = _gcd(res, b)
+    return res
 
 
 if __name__ == '__main__':
