@@ -1,11 +1,11 @@
 from sys import argv
 from os import mkdir
-from os.path import basename, exists, join, dirname
+from os.path import basename, exists, join
 
 from math import gcd as _gcd
 
 
-if __name__ != '__main__' and dirname(__file__) == dirname(argv[0]):
+if __name__ != '__main__':
     DIR_MODULE = '_' + basename(argv[0])[:-3]
 
     if not exists(DIR_MODULE):
