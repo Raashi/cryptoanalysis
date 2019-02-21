@@ -1,7 +1,7 @@
 from sys import argv, exit
 from random import choice
 
-from utils import read_text, write_text, rus_alph, gcd
+from utils import read_text, write_text, alph_rus, gcd
 
 
 def str_key(key):
@@ -42,7 +42,7 @@ def encrypt(msg: str, key: list):
 
     length = len(key)
     while len(msg) % length:
-        msg += choice(rus_alph)
+        msg += choice(alph_rus)
 
     enc = ''
     for b in range(len(msg) // length):

@@ -13,8 +13,8 @@ if __name__ != '__main__':
 else:
     DIR_MODULE = ''
 
-rus_alph = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
-eng_alph = 'abcdefghijklmnopqrstuvwxyz'
+alph_rus = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
+alph_eng = 'abcdefghijklmnopqrstuvwxyz'
 
 
 def _resolve_path(fn):

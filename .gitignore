@@ -1,9 +1,6 @@
 # macOS files
 .DS_Store
 
-# project files
-_*/
-
 # python files
 __pycache__
 .idea

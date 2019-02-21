@@ -1,15 +1,16 @@
 # usage: %user%:> python friedman.py gen [length]
 #        %user%:> python friedman.py eindex filename
+#        %user%:> python friedman.py meindex filename
 from sys import argv
 from os.path import join, exists
 from functools import reduce
 
 from samples.sample import get_random_seq, get_random_piece
-from utils import DIR_MODULE, rus_alph, eng_alph, read, write
+from utils import DIR_MODULE, alph_rus, alph_eng, read, write
 
 
-TEST_FILENAME = 'test.txt'
-TEST_FILENAME_BACKUP = 'test_old.txt'
+TEST_FILENAME = 'table.txt'
+TEST_FILENAME_BACKUP = 'table_old.txt'
 
 
 def handle_backup():
@@ -24,12 +25,12 @@ def gen_samples(length):
     ftest = open(join(DIR_MODULE, TEST_FILENAME), 'w', encoding='utf-8')
     # случайная - русский
     for _ in range(2):
-        ftest.write(get_random_seq(rus_alph, length) + '\n')
-        ftest.write(get_random_seq(rus_alph, length) + '\n')
+        ftest.write(get_random_seq(alph_rus, length) + '\n')
+        ftest.write(get_random_seq(alph_rus, length) + '\n')
     # случайная - английский
     for _ in range(2):
-        ftest.write(get_random_seq(eng_alph, length) + '\n')
-        ftest.write(get_random_seq(eng_alph, length) + '\n')
+        ftest.write(get_random_seq(alph_eng, length) + '\n')
+        ftest.write(get_random_seq(alph_eng, length) + '\n')
     ftest.write('\n')
 
     # русский
@@ -79,7 +80,7 @@ def eindex(fn):
 
 def _meindex(seq1, seq2):
     length = len(seq1)
-    alph = rus_alph if any(seq1.count(letter) for letter in rus_alph) else eng_alph
+    alph = alph_rus if any(seq1.count(letter) for letter in alph_rus) else alph_eng
     return sum(seq1.count(letter) * seq2.count(letter) * (length ** -2) for letter in alph)
 
 
