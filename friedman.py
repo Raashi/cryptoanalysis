@@ -1,27 +1,29 @@
-# usage: %user%:> python friedman.py gen [length]
-#        %user%:> python friedman.py eindex filename
-#        %user%:> python friedman.py meindex filename
-from sys import argv
-from os.path import join, exists
+"""
+usage:
+%user%:> python friedman.py gen 100
+
+%user%:> python friedman.py eindex table.txt
+%user%:> python friedman.py meindex table.txt
+
+%user%:> python friedman.py enc text_rus.txt alph_rus.txt key_rus.txt
+%user%:> python friedman.py dec enc.txt alph_rus.txt key_rus.txt
+
+%user%:> python friedman.py enc text_eng.txt alph_eng.txt key_eng.txt
+%user%:> python friedman.py dec enc.txt alph_eng.txt key_eng.txt
+
+%user%:> python friedman.py analyze text_eng.txt alph_eng.txt key_eng.txt key_eng_7.txt
+%user%:> python friedman.py analyze text_rus.txt alph_rus.txt key_rus.txt key_rus_7.txt
+"""
 from functools import reduce
 
 from samples.sample import get_random_seq, get_random_piece
-from utils import DIR_MODULE, alph_rus, alph_eng, read, write
+from utils import *
 
 
 TEST_FILENAME = 'table.txt'
-TEST_FILENAME_BACKUP = 'table_old.txt'
-
-
-def handle_backup():
-    path_old = join(DIR_MODULE, TEST_FILENAME)
-    if exists(path_old):
-        write(TEST_FILENAME_BACKUP, read(path_old))
 
 
 def gen_samples(length):
-    handle_backup()
-
     ftest = open(join(DIR_MODULE, TEST_FILENAME), 'w', encoding='utf-8')
     # случайная - русский
     for _ in range(2):
@@ -56,15 +58,19 @@ def read_samples(fn):
     }
 
 
-def write_answers(results, titles):
+def write_answers(results, titles_column, titles_row):
     precision = 3
-    align = max(map(lambda title: len(title), titles)) + 4
-    print('{}    {:<{align}} {:<{align}} {:<{align}}'.format(' ' * 8, *titles, align=align))
-    for idx in range(4):
-        print('Пример {}    {:<{align}} {:<{align}} {:<{align}}'
-              .format(idx, round(results[0][idx], precision),
+    space = 4
+    align_head = max(map(lambda title: len(title), titles_row)) + space
+    align = max(map(lambda title: len(title), titles_column)) + space
+    print('{:<{align_head}} {:<{align}} {:<{align}} {:<{align}}'
+          .format(titles_row[0], *titles_column, align=align, align_head=align_head))
+    for idx in range(len(titles_row) - 1):
+        print('{:<{align_head}} {:<{align}} {:<{align}} {:<{align}}'
+              .format(titles_row[idx + 1], round(results[0][idx], precision),
                       round(results[1][idx], precision),
-                      round(results[2][idx], precision), align=align))
+                      round(results[2][idx], precision),
+                      align=align, align_head=align_head))
 
 
 def _eindex(seq1, seq2):
@@ -75,7 +81,9 @@ def eindex(fn):
     samples = read_samples(fn)
     results = {key: [_eindex(sample[0], sample[1]) for sample in samples[key]] for key in samples}
     results = [results['rand'], results['eng'], results['rus']]
-    write_answers(results, ['I(y,z)×100 случ', 'I(y,z)×100 англ', 'I(y,z)×100 рус'])
+    write_answers(results,
+                  ['I(y,z)×100 случ', 'I(y,z)×100 англ', 'I(y,z)×100 рус'],
+                  ['', 'Пример 1', 'Пример 2', 'Пример 3'])
 
 
 def _meindex(seq1, seq2):
@@ -88,7 +96,42 @@ def meindex(fn):
     samples = read_samples(fn)
     results = {key: [_meindex(sample[0], sample[1]) for sample in samples[key]] for key in samples}
     results = [results['rand'], results['eng'], results['rus']]
-    write_answers(results, ['Iср(y,z)×100 случ', 'Iср(y,z)×100 англ', 'Iср(y,z)×100 рус'])
+    write_answers(results,
+                  ['Iср(y,z)×100 случ', 'Iср(y,z)×100 англ', 'Iср(y,z)×100 рус'],
+                  ['', 'Пример 1', 'Пример 2', 'Пример 3'])
+
+
+def encrypt(msg: str, alph: str, key: str):
+    enc = ''
+    for idx, char in enumerate(msg):
+        enc += alph[(alph.index(char) + alph.index(key[idx % len(key)])) % len(alph)]
+    return enc
+
+
+def decrypt(enc: str, alph: str, key: str):
+    dec = ''
+    for idx, char in enumerate(enc):
+        dec += alph[(alph.index(char) - alph.index(key[idx % len(key)])) % len(alph)]
+    return dec
+
+
+def analyze(msg: str, alph: str, key_5: str, key_7: str):
+    enc_5 = encrypt(msg, alph, key_5)
+    enc_7 = encrypt(msg, alph, key_7)
+    results = {'orig': [], '5': [], '7': []}
+    for shift in range(1, 16):
+        msg_shifted = msg[shift:] + msg[:shift]
+        enc_5_shifted = enc_5[shift:] + enc_5[:shift]
+        enc_7_shifted = enc_7[shift:] + enc_7[:shift]
+        results['orig'].append(_eindex(msg, msg_shifted))
+        results['5'].append(_eindex(enc_5, enc_5_shifted))
+        results['7'].append(_eindex(enc_7, enc_7_shifted))
+    results = [results['orig'], results['5'], results['7']]
+    titles = ['I(y,y(+l))×100 для открытого',
+              'I(y,y(+l))×100 для шифрограммы, k=5',
+              'I(y,y(+l))×100 для шифрограммы, k=7']
+    columns = [''] + [str(shift) for shift in range(1, 16)]
+    write_answers(results, titles, columns)
 
 
 def main():
@@ -100,6 +143,28 @@ def main():
         eindex(argv[2])
     elif op == 'meindex':
         meindex(argv[2])
+    elif op == 'enc':
+        msg, symbols = read_text(argv[2])
+        alph = read_text(argv[3])[0]
+        key = read_text(argv[4])[0]
+        enc = encrypt(msg.lower(), alph, key)
+        write_text('enc.txt', enc, symbols)
+    elif op == 'dec':
+        enc, symbols = read_text(argv[2])
+        alph = read_text(argv[3])[0]
+        key = read_text(argv[4])[0]
+        dec = decrypt(enc, alph, key)
+        write_text('dec.txt', dec, symbols)
+    elif op == 'analyze':
+        msg = read_text(argv[2])[0]
+        msg = msg[:100]
+        msg = msg.lower()
+        if len(msg) != 100:
+            print('ОШИБКА: текст должен быть длиной 100 символов и более')
+        alph = read_text(argv[3])[0]
+        key_5 = read_text(argv[4])[0]
+        key_7 = read_text(argv[5])[0]
+        analyze(msg, alph, key_5, key_7)
     else:
         print('ОШИБКА: неверный код операции')
 
