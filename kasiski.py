@@ -8,7 +8,7 @@ usage:
 from sys import argv, exit
 from random import choice
 
-from utils import read_text, write_text, alph_rus, gcd, write, read
+from utils import *
 
 
 def str_key(key):
@@ -86,21 +86,19 @@ def get_seqs(enc, length) -> dict:
 
 def _kasiski(enc, length):
     seqs = get_seqs(enc, length)
-    # словарь: возможная длиная ключа -> число последовательностей, которые ее дают
-    possible = {}
-    for (seq, seq_gcd) in seqs.items():
-        if seq_gcd not in possible:
-            possible[seq_gcd] = 0
-        possible[seq_gcd] += 1
-    possible = [(seq_gcd, seq_gcd_count) for (seq_gcd, seq_gcd_count) in possible.items() if seq_gcd_count > 1]
-    possible.sort(key=lambda el: el[1])
+    possible = list(set(seqs.values()))
+    possible.sort()
     return possible
 
 
 def kasiski(enc, start, end):
     results = [_kasiski(enc, length) for length in range(start, end + 1)]
+    report = []
     for idx, possible in zip(range(start, end + 1), results):
-        print('Длина: {:>3} | Возможные длины ключей: {}'.format(idx, list(map(lambda el: el[0], possible))))
+        res_str = 'Длина: {:>2} | Возможные длины ключей: {}'.format(idx, possible)
+        report.append(res_str)
+        print(res_str)
+    write('kasiski.txt', '\n'.join(report))
 
 
 def _brute(length, container: list, idx_cur):
@@ -118,20 +116,15 @@ def _brute(length, container: list, idx_cur):
     container[idx_cur] = None
 
 
-def brute(enc):
-    length = kasiski(enc)
-    if length == 1:
-        print('Текст не зашифрован')
-        exit(0)
+def brute(enc, length):
     container = [None] * length
+    f = get_file_write('bruted.txt')
     for key in _brute(length, container, 0):
         print(str_key(key) + '\r', end='')
         dec = decrypt(enc, key)
-        if kasiski(dec) < 3:
-            print('\nКлюч расшифрования: {}'.format(str_key(key)))
-            return key, dec
-    print('Невозможно расшифровать')
-    return None, None
+        f.write(str_key(key) + '\n')
+        f.write(dec + '\n\n')
+    f.close()
 
 
 def main():
@@ -151,15 +144,14 @@ def main():
         dec = decrypt(enc, key)
         write('dec.txt', dec)
     elif op == 'kas':
-        enc, _ = read_text(argv[2])
+        enc = read(argv[2]).lower()
         print('Количество символов: {}'.format(len(enc)))
         start, end = int(argv[3]), int(argv[4])
         kasiski(enc, start, end)
     elif op == 'brute':
-        enc, symbols = read_text(argv[2])
-        _, dec = brute(enc)
-        if dec is not None:
-            write_text('bruted.txt', dec, symbols)
+        enc = read(argv[2]).lower()
+        length = int(argv[3])
+        brute(enc, length)
     else:
         print('ОШИБКА: неверная операция')
 

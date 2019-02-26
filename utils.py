@@ -25,6 +25,11 @@ def _resolve_path(fn):
     return fn
 
 
+def get_file_write(fn, root=False):
+    path = join(DIR_MODULE, fn) if not root else fn
+    return open(path, 'w', encoding='utf-8')
+
+
 def read(fn):
     with open(_resolve_path(fn), encoding='utf-8') as f:
         return f.read()
