@@ -8,7 +8,7 @@ usage:
 from sys import argv, exit
 from random import choice
 
-from utils import read_text, write_text, alph_rus, gcd
+from utils import read_text, write_text, alph_rus, gcd, write, read
 
 
 def str_key(key):
@@ -23,6 +23,10 @@ def check_mono_key(key):
     if not res:
         print('ОШИБКА: сгенерированный ключ не моноцикличен:', str_key(key))
     return res
+
+
+def read_key(skey):
+    return list(map(lambda el: int(el) - 1, skey.split(',')))
 
 
 def generate_key(length: int):
@@ -41,6 +45,7 @@ def generate_key(length: int):
     if not check_mono_key(key):
         exit(1)
     print('Сгенерирован ключ длины {}:'.format(length), str_key(key))
+    write('key.txt', str_key(key))
     return key
 
 
@@ -69,57 +74,33 @@ def decrypt(enc, key):
     return dec
 
 
-def find_seqs(enc, length) -> list:
+def get_seqs(enc, length) -> dict:
     seqs = {}
     for idx in range(len(enc) - length):
         seq = enc[idx: idx + length]
         if seq not in seqs:
             seqs[seq] = []
         seqs[seq].append(idx)
-    # отсекаем единичные вхождения, считаем нод
-    res = [(key, seqs[key], gcd(seqs[key])) for key in filter(lambda k: len(seqs[k]) > 1, seqs)]
-    # отсекаем НОД == 1
-    res = list(filter(lambda el: el[2] != 1, res))
-    if not len(res):
-        return []
-    # находим максимальное количество вхождений
-    max_entry = max(map(lambda el: len(el[1]), res))
-    # отсекаем строки, которые входили более чем max_entry/2 раз
-    res = list(filter(lambda el: len(el[1]) > max_entry // 2, res))
-    # сортируем по числу вхождений
-    res.sort(key=lambda el: len(el[1]), reverse=True)
-    return res
+    return {key: gcd(seqs[key]) for key in seqs if len(seqs[key]) > 1}
 
 
 def _kasiski(enc, length):
-    seqs = find_seqs(enc, length)
-    if not seqs:
-        return 1
-    # словарь: возможная длиная ключа -> число последовательностей, которые ее дают | число вхождений, которые ее дают
+    seqs = get_seqs(enc, length)
+    # словарь: возможная длиная ключа -> число последовательностей, которые ее дают
     possible = {}
-    for (key, seq, seq_gcd) in reversed(seqs):
+    for (seq, seq_gcd) in seqs.items():
         if seq_gcd not in possible:
-            possible[seq_gcd] = [0, 0]
-        possible[seq_gcd][0] += 1
-        possible[seq_gcd][1] += len(seq)
-    if argv[1] == 'kas' and '-v' in argv:
-        print('Анализ для последовательностей длины {}'.format(length))
-        for (entry, (seq_count, seq_amount)) in sorted(possible.items(), key=lambda el: el[0]):
-            print('Длина: {:>3} | Число строк: {:>3} | Число вхождений: {}'.format(entry, seq_count, seq_amount))
-    max_entries = max(map(lambda el: el[1], possible.values()))
-    for entry in possible:
-        if possible[entry][1] == max_entries:
-            return entry
+            possible[seq_gcd] = 0
+        possible[seq_gcd] += 1
+    possible = [(seq_gcd, seq_gcd_count) for (seq_gcd, seq_gcd_count) in possible.items() if seq_gcd_count > 1]
+    possible.sort(key=lambda el: el[1])
+    return possible
 
 
-def kasiski(enc):
-    start = 3
-    end = 10
+def kasiski(enc, start, end):
     results = [_kasiski(enc, length) for length in range(start, end + 1)]
-    # возможная длина ключа | количество длин последовательностей, дающих такую длину
-    entries = [(length, results.count(length)) for length in set(results)]
-    entries.sort(reverse=True, key=lambda el: el[1])
-    return entries[0][0]
+    for idx, possible in zip(range(start, end + 1), results):
+        print('Длина: {:>3} | Возможные длины ключей: {}'.format(idx, list(map(lambda el: el[0], possible))))
 
 
 def _brute(length, container: list, idx_cur):
@@ -139,9 +120,9 @@ def _brute(length, container: list, idx_cur):
 
 def brute(enc):
     length = kasiski(enc)
-    if length < 3:
-        print('Текст не зашифрован, либо зашиифрован тривиальным ключом 2,1. Смотри bruted.txt')
-        return [1, 0], decrypt(enc, [1, 0])
+    if length == 1:
+        print('Текст не зашифрован')
+        exit(0)
     container = [None] * length
     for key in _brute(length, container, 0):
         print(str_key(key) + '\r', end='')
@@ -160,25 +141,20 @@ def main():
         length = int(argv[2])
         generate_key(length)
     elif op == 'enc':
-        msg, next_lines = read_text(argv[2])
-        if ',' in argv[3]:
-            key = [int(el) - 1 for el in argv[3].split(',')]
-        else:
-            key = generate_key(int(argv[3]))
-
+        msg = read(argv[2])
+        key = read_key(read(argv[3]))
         enc = encrypt(msg, key)
-        write_text('enc.txt', enc, next_lines)
+        write('enc.txt', enc)
     elif op == 'dec':
-        enc, next_lines = read_text(argv[2])
-        key = [int(el) - 1 for el in argv[3].split(',')]
-
+        enc = read(argv[2])
+        key = read_key(read(argv[3]))
         dec = decrypt(enc, key)
-        write_text('dec.txt', dec, next_lines)
+        write('dec.txt', dec)
     elif op == 'kas':
         enc, _ = read_text(argv[2])
         print('Количество символов: {}'.format(len(enc)))
-        length = kasiski(enc)
-        print('Длина ключа: {}'.format(length))
+        start, end = int(argv[3]), int(argv[4])
+        kasiski(enc, start, end)
     elif op == 'brute':
         enc, symbols = read_text(argv[2])
         _, dec = brute(enc)
