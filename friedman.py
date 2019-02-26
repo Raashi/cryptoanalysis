@@ -74,31 +74,28 @@ def write_answers(results, titles_column, titles_row):
 
 
 def _eindex(seq1, seq2):
-    return reduce(lambda acc, els: acc + int(els[0] == els[1]), zip(seq1, seq2), 0) / len(seq1)
+    return reduce(lambda acc, els: acc + int(els[0] == els[1]), zip(seq1, seq2), 0) / len(seq1) * 100
 
 
-def eindex(fn):
-    samples = read_samples(fn)
-    results = {key: [_eindex(sample[0], sample[1]) for sample in samples[key]] for key in samples}
-    results = [results['rand'], results['eng'], results['rus']]
-    write_answers(results,
-                  ['I(y,z)×100 случ', 'I(y,z)×100 англ', 'I(y,z)×100 рус'],
-                  ['', 'Пример 1', 'Пример 2', 'Пример 3'])
+def eindex(fn1, fn2):
+    text1 = read(fn1).strip().lower()
+    text2 = read(fn2).strip().lower()
+    res = _eindex(text1, text2)
+    print('Индекс вопадения: {}'.format(res))
 
 
-def _meindex(seq1, seq2):
-    length = len(seq1)
-    alph = alph_rus if any(seq1.count(letter) for letter in alph_rus) else alph_eng
-    return sum(seq1.count(letter) * seq2.count(letter) * (length ** -2) for letter in alph)
+def _meindex(seq1, seq2, alph):
+    length = min(len(seq1), len(seq2))
+    seq1, seq2 = seq1[:length], seq2[:length]
+    return sum(seq1.count(letter) * seq2.count(letter) * (length ** -2) for letter in alph) * 100
 
 
-def meindex(fn):
-    samples = read_samples(fn)
-    results = {key: [_meindex(sample[0], sample[1]) for sample in samples[key]] for key in samples}
-    results = [results['rand'], results['eng'], results['rus']]
-    write_answers(results,
-                  ['Iср(y,z)×100 случ', 'Iср(y,z)×100 англ', 'Iср(y,z)×100 рус'],
-                  ['', 'Пример 1', 'Пример 2', 'Пример 3'])
+def meindex(fn1, fn2, fn_alph):
+    text1 = read(fn1).strip().lower()
+    text2 = read(fn2).strip().lower()
+    alph = read(fn_alph).strip()
+    res = _meindex(text1, text2, alph)
+    print('Средний индекс совпадения: {}'.format(res))
 
 
 def encrypt(msg: str, alph: str, key: str):
@@ -140,7 +137,7 @@ def main():
     if op == 'gen':
         gen_samples(100 if len(argv) < 3 else int(argv[2]))
     elif op == 'eindex':
-        eindex(argv[2])
+        eindex(argv[2], argv[3])
     elif op == 'meindex':
         meindex(argv[2])
     elif op == 'enc':
