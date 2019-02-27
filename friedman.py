@@ -1,19 +1,17 @@
 """
 usage:
-%user%:> python friedman.py gen 100
+%user%:> python friedman.py rus/alph.txt 100 seq1.txt
+%user%:> python friedman.py eng/alph.txt 100 seq2.txt
 
-%user%:> python friedman.py eindex table.txt
-%user%:> python friedman.py meindex table.txt
+%user%:> python friedman.py eindex seq1.txt seq2.txt
+%user%:> python friedman.py meindex seq1.txt seq2.txt
 
-%user%:> python friedman.py enc text_rus.txt alph_rus.txt key_rus.txt
-%user%:> python friedman.py dec enc.txt alph_rus.txt key_rus.txt
+%user%:> python friedman.py enc rus/t1.txt rus/alph.txt key.txt
+%user%:> python friedman.py dec enc.txt rus/alph.txt key.txt
 
-%user%:> python friedman.py enc text_eng.txt alph_eng.txt key_eng.txt
-%user%:> python friedman.py dec enc.txt alph_eng.txt key_eng.txt
-
-%user%:> python friedman.py analyze text_eng.txt alph_eng.txt key_eng.txt key_eng_7.txt
-%user%:> python friedman.py analyze text_rus.txt alph_rus.txt key_rus.txt key_rus_7.txt
+%user%:> python friedman.py analyze enc.txt
 """
+from random import choice
 from functools import reduce
 
 from samples.sample import get_random_seq, get_random_piece
@@ -73,95 +71,86 @@ def write_answers(results, titles_column, titles_row):
                       align=align, align_head=align_head))
 
 
-def _eindex(seq1, seq2):
-    return reduce(lambda acc, els: acc + int(els[0] == els[1]), zip(seq1, seq2), 0) / len(seq1) * 100
+def gen_seq(fn_alph, length):
+    alph = read(fn_alph)
+    return ''.join(choice(alph) for _ in range(length))
 
 
-def eindex(fn1, fn2):
-    text1 = read(fn1).strip().lower()
-    text2 = read(fn2).strip().lower()
-    res = _eindex(text1, text2)
-    print('Индекс вопадения: {}'.format(res))
-
-
-def _meindex(seq1, seq2, alph):
+def _get_eindex(seq1, seq2):
     length = min(len(seq1), len(seq2))
     seq1, seq2 = seq1[:length], seq2[:length]
-    return sum(seq1.count(letter) * seq2.count(letter) * (length ** -2) for letter in alph) * 100
+    eindex = reduce(lambda acc, els: acc + int(els[0] == els[1]), zip(seq1, seq2), 0) / length
+    return eindex * 100
 
 
-def meindex(fn1, fn2, fn_alph):
+def get_eindex(fn1, fn2):
+    text1 = read(fn1).strip().lower()
+    text2 = read(fn2).strip().lower()
+    eindex = _get_eindex(text1, text2)
+    print('Индекс вопадения: {:.2f}'.format(eindex))
+
+
+def _get_meindex(seq1, seq2, alph):
+    length = min(len(seq1), len(seq2))
+    seq1, seq2 = seq1[:length], seq2[:length]
+    meindex = sum(seq1.count(letter) * seq2.count(letter) for letter in alph) / length / length
+    return meindex * 100
+
+
+def get_meindex(fn1, fn2, fn_alph):
     text1 = read(fn1).strip().lower()
     text2 = read(fn2).strip().lower()
     alph = read(fn_alph).strip()
-    res = _meindex(text1, text2, alph)
-    print('Средний индекс совпадения: {}'.format(res))
+    res = _get_meindex(text1, text2, alph)
+    print('Средний индекс совпадения: {:.2f}'.format(res))
 
 
-def encrypt(msg: str, alph: str, key: str):
+def encrypt(msg, alph, key):
     enc = ''
     for idx, char in enumerate(msg):
         enc += alph[(alph.index(char) + alph.index(key[idx % len(key)])) % len(alph)]
     return enc
 
 
-def decrypt(enc: str, alph: str, key: str):
+def decrypt(enc, alph, key):
     dec = ''
     for idx, char in enumerate(enc):
         dec += alph[(alph.index(char) - alph.index(key[idx % len(key)])) % len(alph)]
     return dec
 
 
-def analyze(msg: str, alph: str, key_5: str, key_7: str):
-    enc_5 = encrypt(msg, alph, key_5)
-    enc_7 = encrypt(msg, alph, key_7)
-    results = {'orig': [], '5': [], '7': []}
+def analyze(fn):
+    msg = read_text(fn)[0].strip().lower()
     for shift in range(1, 16):
-        msg_shifted = msg[shift:] + msg[:shift]
-        enc_5_shifted = enc_5[shift:] + enc_5[:shift]
-        enc_7_shifted = enc_7[shift:] + enc_7[:shift]
-        results['orig'].append(_eindex(msg, msg_shifted))
-        results['5'].append(_eindex(enc_5, enc_5_shifted))
-        results['7'].append(_eindex(enc_7, enc_7_shifted))
-    results = [results['orig'], results['5'], results['7']]
-    titles = ['I(y,y(+l))×100 для открытого',
-              'I(y,y(+l))×100 для шифрограммы, k=5',
-              'I(y,y(+l))×100 для шифрограммы, k=7']
-    columns = [''] + [str(shift) for shift in range(1, 16)]
-    write_answers(results, titles, columns)
+        msg_shifted = msg[:shift] + msg[:shift]
+        eindex = _get_eindex(msg, msg_shifted)
+        print('l = {:>2} | индекс = {:.2f}'.format(shift, eindex))
 
 
 def main():
     op = argv[1]
 
     if op == 'gen':
-        gen_samples(100 if len(argv) < 3 else int(argv[2]))
+        seq = gen_seq(argv[2], int(argv[3]))
+        write(argv[4], seq)
     elif op == 'eindex':
-        eindex(argv[2], argv[3])
+        get_eindex(argv[2], argv[3])
     elif op == 'meindex':
-        meindex(argv[2])
+        get_meindex(argv[2], argv[3], argv[4])
     elif op == 'enc':
         msg, symbols = read_text(argv[2])
         alph = read_text(argv[3])[0]
         key = read_text(argv[4])[0]
         enc = encrypt(msg.lower(), alph, key)
-        write_text('enc.txt', enc, symbols)
+        write('enc.txt', enc)
     elif op == 'dec':
-        enc, symbols = read_text(argv[2])
-        alph = read_text(argv[3])[0]
-        key = read_text(argv[4])[0]
+        enc = read_text(argv[2])[0]
+        alph = read(argv[3])
+        key = read(argv[4])
         dec = decrypt(enc, alph, key)
-        write_text('dec.txt', dec, symbols)
+        write('dec.txt', dec)
     elif op == 'analyze':
-        msg = read_text(argv[2])[0]
-        msg = msg[:100]
-        msg = msg.lower()
-        if len(msg) != 100:
-            print('ОШИБКА: текст должен быть длиной 100 символов и более')
-        alph = read_text(argv[3])[0]
-        key_5 = read_text(argv[4])[0]
-        key_7 = read_text(argv[5])[0]
-        analyze(msg, alph, key_5, key_7)
+        analyze(argv[2])
     else:
         print('ОШИБКА: неверный код операции')
 
