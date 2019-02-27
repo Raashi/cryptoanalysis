@@ -5,7 +5,7 @@ usage:
 %user%:> python kasiski.py dec enc.txt 2,4,1,3
 %user%:> python kasiski.py kas enc.txt
 """
-from sys import argv, exit
+from sys import exit
 from random import choice
 
 from utils import *
