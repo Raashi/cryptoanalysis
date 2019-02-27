@@ -84,8 +84,8 @@ def _get_eindex(seq1, seq2):
 
 
 def get_eindex(fn1, fn2):
-    text1 = read(fn1).strip().lower()
-    text2 = read(fn2).strip().lower()
+    text1 = read_text(fn1)[0].strip().lower()
+    text2 = read_text(fn2)[0].strip().lower()
     eindex = _get_eindex(text1, text2)
     print('Индекс вопадения: {:.2f}'.format(eindex))
 
@@ -98,8 +98,8 @@ def _get_meindex(seq1, seq2, alph):
 
 
 def get_meindex(fn1, fn2, fn_alph):
-    text1 = read(fn1).strip().lower()
-    text2 = read(fn2).strip().lower()
+    text1 = read_text(fn1)[0].strip().lower()
+    text2 = read_text(fn2)[0].strip().lower()
     alph = read(fn_alph).strip()
     res = _get_meindex(text1, text2, alph)
     print('Средний индекс совпадения: {:.2f}'.format(res))
