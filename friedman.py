@@ -107,17 +107,31 @@ def get_meindex(fn1, fn2, fn_alph):
     print('Средний индекс совпадения x 100 : {:.2f}'.format(res))
 
 
+def encrypt_char(alph, idx, char, key):
+    if char not in alph:
+        return char
+    else:
+        return alph[(alph.index(char) + alph.index(key[idx % len(key)])) % len(alph)]
+
+
 def encrypt(msg, alph, key):
     enc = ''
     for idx, char in enumerate(msg):
-        enc += alph[(alph.index(char) + alph.index(key[idx % len(key)])) % len(alph)]
+        enc += encrypt_char(alph, idx, char, key)
     return enc
+
+
+def decrypt_char(alph, idx, char, key):
+    if char not in alph:
+        return char
+    else:
+        return alph[(alph.index(char) - alph.index(key[idx % len(key)])) % len(alph)]
 
 
 def decrypt(enc, alph, key):
     dec = ''
     for idx, char in enumerate(enc):
-        dec += alph[(alph.index(char) - alph.index(key[idx % len(key)])) % len(alph)]
+        dec += decrypt_char(alph, idx, char, key)
     return dec
 
 
@@ -140,13 +154,14 @@ def main():
     elif op == 'meindex':
         get_meindex(argv[2], argv[3], argv[4])
     elif op == 'enc':
-        msg = read_text(argv[2])[0]
-        alph = read_text(argv[3])[0]
+        alph = read(argv[3])
+        msg = read(argv[2]).lower()
+        # msg = ''.join(list(filter(lambda x: x in alph, msg)))
         key = read_text(argv[4])[0]
         enc = encrypt(msg.lower(), alph, key)
         write('enc.txt', enc)
     elif op == 'dec':
-        enc = read_text(argv[2])[0]
+        enc = read(argv[2])
         alph = read(argv[3])
         key = read(argv[4])
         dec = decrypt(enc, alph, key)
