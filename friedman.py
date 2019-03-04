@@ -99,10 +99,10 @@ def _get_meindex(seq1, seq2, alph):
 
 
 def get_meindex(fn1, fn2, fn_alph):
-    text1 = read_text(fn1)[0].strip().lower()
-    text2 = read_text(fn2)[0].strip().lower()
+    text1 = read(fn1).lower()
+    text2 = read(fn2).lower()
     print('Количество символов: {}'.format(min(len(text1), len(text2))))
-    alph = read(fn_alph).strip()
+    alph = read(fn_alph)
     res = _get_meindex(text1, text2, alph)
     print('Средний индекс совпадения x 100 : {:.2f}'.format(res))
 
@@ -136,7 +136,7 @@ def decrypt(enc, alph, key):
 
 
 def analyze(fn):
-    msg = read_text(fn)[0].strip().lower()
+    msg = read(fn).lower()
     for shift in range(1, 16):
         msg_shifted = msg[:shift] + msg[:shift]
         eindex = _get_eindex(msg, msg_shifted)
