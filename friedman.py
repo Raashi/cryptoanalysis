@@ -1,7 +1,7 @@
 """
 usage:
-%user%:> python friedman.py rus/alph.txt 100 seq1.txt
-%user%:> python friedman.py eng/alph.txt 100 seq2.txt
+%user%:> python friedman.py gen rus/alph.txt 100 seq1.txt
+%user%:> python friedman.py gen eng/alph.txt 100 seq2.txt
 
 %user%:> python friedman.py eindex seq1.txt seq2.txt
 %user%:> python friedman.py meindex seq1.txt seq2.txt
@@ -86,8 +86,9 @@ def _get_eindex(seq1, seq2):
 def get_eindex(fn1, fn2):
     text1 = read_text(fn1)[0].strip().lower()
     text2 = read_text(fn2)[0].strip().lower()
+    print('Количество символов: {}'.format(min(len(text1), len(text2))))
     eindex = _get_eindex(text1, text2)
-    print('Индекс вопадения: {:.2f}'.format(eindex))
+    print('Индекс вопадения x 100 : {:.2f}'.format(eindex))
 
 
 def _get_meindex(seq1, seq2, alph):
@@ -100,9 +101,10 @@ def _get_meindex(seq1, seq2, alph):
 def get_meindex(fn1, fn2, fn_alph):
     text1 = read_text(fn1)[0].strip().lower()
     text2 = read_text(fn2)[0].strip().lower()
+    print('Количество символов: {}'.format(min(len(text1), len(text2))))
     alph = read(fn_alph).strip()
     res = _get_meindex(text1, text2, alph)
-    print('Средний индекс совпадения: {:.2f}'.format(res))
+    print('Средний индекс совпадения x 100 : {:.2f}'.format(res))
 
 
 def encrypt(msg, alph, key):
@@ -138,7 +140,7 @@ def main():
     elif op == 'meindex':
         get_meindex(argv[2], argv[3], argv[4])
     elif op == 'enc':
-        msg, symbols = read_text(argv[2])
+        msg = read_text(argv[2])[0]
         alph = read_text(argv[3])[0]
         key = read_text(argv[4])[0]
         enc = encrypt(msg.lower(), alph, key)
