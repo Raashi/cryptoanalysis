@@ -76,28 +76,20 @@ def gen_seq(fn_alph, length):
     return ''.join(choice(alph) for _ in range(length))
 
 
-def _get_eindex_symbol(symb1, symb2, alph, acc, count):
-    if symb1 in alph and symb2 in alph:
-        return acc + (int(symb1 == symb2)), count + 1
-    else:
-        return acc, count
-
-
-def _get_eindex(seq1, seq2, alph):
+def _get_eindex(seq1, seq2):
     length = min(len(seq1), len(seq2))
     seq1, seq2 = seq1[:length], seq2[:length]
-    acc = count = 0
+    res = 0
     for (symb1, symb2) in zip(seq1, seq2):
-        acc, count = _get_eindex_symbol(symb1, symb2, alph, acc, count)
-    return acc / count * 100
+        res += int(symb1 == symb2)
+    return res / length * 100
 
 
-def get_eindex(fn1, fn2, fn_alph):
+def get_eindex(fn1, fn2):
     text1 = read_text(fn1)[0].strip().lower()
     text2 = read_text(fn2)[0].strip().lower()
     print('Количество символов: {}'.format(min(len(text1), len(text2))))
-    alph = read(fn_alph)
-    eindex = _get_eindex(text1, text2, alph)
+    eindex = _get_eindex(text1, text2)
     print('Индекс вопадения x 100 : {:.2f}'.format(eindex))
 
 
@@ -131,7 +123,7 @@ def encrypt(msg, alph, key):
     return enc
 
 
-def decrypt_char(alph, idx, char, key):
+def decrypt_char(key, idx, char, alph):
     if char not in alph:
         return char
     else:
@@ -145,12 +137,11 @@ def decrypt(enc, alph, key):
     return dec
 
 
-def analyze(fn, fn_alph):
+def analyze(fn):
     msg = read(fn).lower()
-    alph = read(fn_alph)
     for shift in range(1, 16):
-        msg_shifted = msg[shift:] + msg[:shift]
-        eindex = _get_eindex(msg, msg_shifted, alph)
+        msg_shifted = msg[shift:]
+        eindex = _get_eindex(msg, msg_shifted)
         print('l = {:>2} | индекс = {:.2f}'.format(shift, eindex))
 
 
@@ -161,7 +152,7 @@ def main():
         seq = gen_seq(argv[2], int(argv[3]))
         write(argv[4], seq)
     elif op == 'eindex':
-        get_eindex(argv[2], argv[3], argv[4])
+        get_eindex(argv[2], argv[3])
     elif op == 'meindex':
         get_meindex(argv[2], argv[3], argv[4])
     elif op == 'enc':
@@ -177,7 +168,7 @@ def main():
         dec = decrypt(enc, alph, key)
         write('dec.txt', dec)
     elif op == 'analyze':
-        analyze(argv[2], argv[3])
+        analyze(argv[2])
     else:
         print('ОШИБКА: неверный код операции')
 

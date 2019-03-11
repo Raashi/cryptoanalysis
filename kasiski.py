@@ -79,9 +79,10 @@ def get_seqs(enc, length) -> dict:
     for idx in range(len(enc) - length):
         seq = enc[idx: idx + length]
         if seq not in seqs:
-            seqs[seq] = []
-        seqs[seq].append(idx)
-    return {key: gcd(seqs[key]) for key in seqs if len(seqs[key]) > 1}
+            seqs[seq] = (idx, [])
+        else:
+            seqs[seq][1].append(idx - seqs[seq][0])
+    return {key: gcd(seqs[key][1]) for key in seqs if len(seqs[key][1])}
 
 
 def _kasiski(enc, length):
