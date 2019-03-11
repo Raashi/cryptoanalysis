@@ -5,73 +5,8 @@ usage:
 %user%:> python kasiski.py dec enc.txt 2,4,1,3
 %user%:> python kasiski.py kas enc.txt
 """
-from sys import exit
-from random import choice
-
 from utils import *
-
-
-def str_key(key):
-    return ','.join(map(lambda el: str(el + 1), key))
-
-
-def check_mono_key(key):
-    idx, start, cycle = 0, 0, 1
-    while key[idx] != start:
-        idx, cycle = key[idx], cycle + 1
-    res = cycle == len(key)
-    if not res:
-        print('ОШИБКА: сгенерированный ключ не моноцикличен:', str_key(key))
-    return res
-
-
-def read_key(skey):
-    return list(map(lambda el: int(el) - 1, skey.split(',')))
-
-
-def generate_key(length: int):
-    key = [None] * length
-    free = [idx for idx in range(1, length)]
-
-    start = idx = 0
-    while len(free):
-        idx_next = choice(free)
-        free.remove(idx_next)
-        key[idx] = idx_next
-        idx = idx_next
-    # noinspection PyTypeChecker
-    key[idx] = start
-
-    if not check_mono_key(key):
-        exit(1)
-    print('Сгенерирован ключ длины {}:'.format(length), str_key(key))
-    write('key.txt', str_key(key))
-    return key
-
-
-def encrypt(msg: str, key: list):
-    if not check_mono_key(key):
-        exit(1)
-
-    length = len(key)
-    while len(msg) % length:
-        msg += choice(alph_rus)
-
-    enc = ''
-    for b in range(len(msg) // length):
-        block = msg[b * length: (b + 1) * length]
-        enc += ''.join(block[el] for el in key)
-    return enc
-
-
-def decrypt(enc, key):
-    length = len(key)
-
-    dec = ''
-    for b in range(len(enc) // length):
-        block = enc[b * length: (b + 1) * length]
-        dec += ''.join(block[key.index(idx)] for idx in range(length))
-    return dec
+from cyphers import Permutations as Perms
 
 
 def get_seqs(enc, length) -> dict:
@@ -110,8 +45,8 @@ def _brute(length, container: list, idx_cur):
             yield from _brute(length, container, idx_next)
         else:
             container[idx_next] = 0
-            if not check_mono_key(container):
-                print('ОШИБКА: неверно сгенерирован ключ длины {}: {}'.format(length, str_key(container)))
+            if not Perms.is_monocycle_key(container):
+                print('ОШИБКА: неверно сгенерирован ключ длины {}: {}'.format(length, Perms.str_key(container)))
             yield container
             container[idx_next] = None
     container[idx_cur] = None
@@ -121,9 +56,9 @@ def brute(enc, length):
     container = [None] * length
     f = get_file_write('bruted.txt')
     for key in _brute(length, container, 0):
-        print(str_key(key) + '\r', end='')
-        dec = decrypt(enc, key)
-        f.write(str_key(key) + '\n')
+        print(Perms.str_key(key) + '\r', end='')
+        dec = Perms.decrypt(enc, key)
+        f.write(Perms.str_key(key) + '\n')
         f.write(dec + '\n\n')
     f.close()
 
@@ -133,16 +68,16 @@ def main():
 
     if op == 'gen':
         length = int(argv[2])
-        generate_key(length)
+        Perms.gen_monocycle_key(length)
     elif op == 'enc':
         msg = read(argv[2])
-        key = read_key(read(argv[3]))
-        enc = encrypt(msg, key)
+        key = Perms.read_key(read(argv[3]))
+        enc = Perms.encrypt(msg, key)
         write('enc.txt', enc)
     elif op == 'dec':
         enc = read(argv[2])
-        key = read_key(read(argv[3]))
-        dec = decrypt(enc, key)
+        key = Perms.read_key(read(argv[3]))
+        dec = Perms.decrypt(enc, key)
         write('dec.txt', dec)
     elif op == 'kas':
         enc = read(argv[2]).lower()
