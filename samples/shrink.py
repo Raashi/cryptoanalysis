@@ -8,6 +8,7 @@ def process(file):
     print('PROCESSING: {}'.format(file))
     with open(file, encoding='utf-8') as f:
         lines = f.readlines()
+    lines = list(map(lambda line: line.strip() + '\n', lines))
     with open(file, 'w', encoding='utf-8') as f:
         f.writelines(filter(lambda el: len(el.strip()), lines))
 
