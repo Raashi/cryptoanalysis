@@ -51,7 +51,8 @@ class Permutations:
         enc = ''
         for b in range(len(msg) // length):
             block = msg[b * length: (b + 1) * length]
-            enc += ''.join(block[el] for el in key)
+            # enc += ''.join(block[el] for el in key)
+            enc += ''.join(block[key.index(idx)] for idx in range(length))
         return enc
 
     @staticmethod
@@ -61,5 +62,6 @@ class Permutations:
         dec = ''
         for b in range(len(enc) // length):
             block = enc[b * length: (b + 1) * length]
-            dec += ''.join(block[key.index(idx)] for idx in range(length))
+            # dec += ''.join(block[key.index(idx)] for idx in range(length))
+            dec += ''.join(block[el] for el in key)
         return dec
