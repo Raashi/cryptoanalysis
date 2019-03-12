@@ -2,6 +2,7 @@ bruted.txt
 _friedman/seq*.txt
 enc.txt
 dec.txt
+key.txt
 
 # macOS files
 .DS_Store

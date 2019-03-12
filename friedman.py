@@ -94,9 +94,9 @@ def get_eindex(fn1, fn2):
 
 
 def _get_meindex(seq1, seq2, alph):
-    length = min(len(seq1), len(seq2))
-    seq1, seq2 = seq1[:length], seq2[:length]
-    meindex = sum(seq1.count(letter) * seq2.count(letter) for letter in alph) / length / length
+    seq1 = ''.join(filter(lambda x: x in alph, seq1))
+    seq2 = ''.join(filter(lambda x: x in alph, seq2))
+    meindex = sum(seq1.count(letter) * seq2.count(letter) for letter in alph) / len(seq1) / len(seq2)
     return meindex * 100
 
 
