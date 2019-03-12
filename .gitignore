@@ -3,6 +3,10 @@ _friedman/seq*.txt
 enc.txt
 dec.txt
 key.txt
+table.txt
+_perms/alph.txt
+_perms/test.txt
+_perms/tree.txt
 
 # macOS files
 .DS_Store
