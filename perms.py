@@ -1,3 +1,5 @@
+import json
+
 from utils import *
 from cyphers import Permutations as Perms
 
@@ -54,27 +56,35 @@ def get_table(enc, banned, length):
 
 def _get_tree(table, row, k, depth, used: set):
     if depth == k:
-        return {}, True
+        return {}
+
+    if depth == k - 1:
+        res = {}
+        for col in range(k):
+            if table[row][col] and col not in used:
+                res[col + 1] = {}
+        return res
+
     res = {}
     for col in range(k):
         if table[row][col] and col not in used:
             used.add(col)
-            sub_node, rr = _get_tree(table, col, k, depth + 1, used)
+            sub_node = _get_tree(table, col, k, depth + 1, used)
             used.remove(col)
-            if sub_node or rr:
-                res[col] = sub_node
-    return res, False
-    # return {col: _get_tree(table, col, k, depth + 1) for col in range(k) if table[row][col]}
+            if sub_node:
+                res[col + 1] = sub_node
+    return res
 
 
 def get_tree(table):
     k = len(table)
     col_trues = [[table[row][col] for row in range(k)].count(True) for col in range(k)]
-    cols = [idx for idx in range(k) if col_trues[idx]]
-    cols.sort(key=lambda col: col_trues[col], reverse=True)
+    cols = [idx for idx in range(k)]
+    cols.sort(key=lambda col: col_trues[col])
 
-    tree = {start: _get_tree(table, start, k, 1, {start})[0] for start in cols}
+    tree = {start + 1: _get_tree(table, start, k, 1, {start}) for start in cols}
     tree = {key: value for (key, value) in tree.items() if value}
+    tree["length"] = k
     return tree
 
 
@@ -96,6 +106,29 @@ def read_tree(tree):
     pass
 
 
+def _brute(node, k, container):
+    for vertex in node:
+        container.append(int(vertex) - 1)
+        if len(container) == k:
+            yield container
+        else:
+            yield from _brute(node[vertex], k, container)
+        container.pop()
+
+
+def brute(enc, tree):
+    k = tree["length"]
+    del tree["length"]
+
+    f = get_file_write("bruted.txt")
+    for key in _brute(tree, k, []):
+        print(Perms.str_key(key) + '\r', end='')
+        dec = Perms.decrypt(enc, key)
+        f.write(Perms.str_key(key) + '\n')
+        f.write(dec + '\n\n')
+    f.close()
+
+
 def main():
     op = argv[1]
 
@@ -107,7 +140,9 @@ def main():
     elif op == 'enc':
         msg = read(argv[2])
         key = Perms.read_key(argv[3])
-        msg = msg[:(len(msg) // len(key)) * len(key)]
+        # msg = msg[:(len(msg) // len(key)) * len(key)]
+        while len(msg) % len(key):
+            msg += ' '
         enc = Perms.encrypt(msg, key)
         write('enc.txt', enc)
     elif op == 'dec':
@@ -126,7 +161,12 @@ def main():
         for idx, row in enumerate(table):
             table[idx] = list(map(lambda x: bool(int(x)), row.split(' ')))
         tree = get_tree(table)
-        write('tree.txt', '\n'.join(display_tree(tree)))
+        # disp_tree = '\n'.join(display_tree(tree))
+        write('tree.txt', json.dumps(tree, indent=4))
+    elif op == 'brute':
+        enc = read(argv[2])
+        tree = json.loads(read(argv[3]))
+        brute(enc, tree)
     else:
         print('ОШИБКА: неверная операция')
 
