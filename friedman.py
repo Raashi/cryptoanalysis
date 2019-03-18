@@ -16,6 +16,7 @@ from functools import reduce
 
 from samples.sample import get_random_seq, get_random_piece
 from utils import *
+from cyphers import Vigenere as Vig
 
 
 TEST_FILENAME = 'table.txt'
@@ -109,34 +110,6 @@ def get_meindex(fn1, fn2, fn_alph):
     print('Средний индекс совпадения x 100 : {:.2f}'.format(res))
 
 
-def encrypt_char(alph, idx, char, key):
-    if char not in alph:
-        return char
-    else:
-        return alph[(alph.index(char) + alph.index(key[idx % len(key)])) % len(alph)]
-
-
-def encrypt(msg, alph, key):
-    enc = ''
-    for idx, char in enumerate(msg):
-        enc += encrypt_char(alph, idx, char, key)
-    return enc
-
-
-def decrypt_char(key, idx, char, alph):
-    if char not in alph:
-        return char
-    else:
-        return alph[(alph.index(char) - alph.index(key[idx % len(key)])) % len(alph)]
-
-
-def decrypt(enc, alph, key):
-    dec = ''
-    for idx, char in enumerate(enc):
-        dec += decrypt_char(alph, idx, char, key)
-    return dec
-
-
 def analyze(fn):
     msg = read(fn).lower()
     for shift in range(1, 16):
@@ -159,13 +132,13 @@ def main():
         alph = read(argv[4])
         msg = read(argv[2]).lower()
         key = read_text(argv[3])[0]
-        enc = encrypt(msg.lower(), alph, key)
+        enc = Vig.encrypt(msg.lower(), alph, key)
         write('enc.txt', enc)
     elif op == 'dec':
         enc = read(argv[2])
         alph = read(argv[3])
         key = read(argv[4])
-        dec = decrypt(enc, alph, key)
+        dec = Vig.decrypt(enc, alph, key)
         write('dec.txt', dec)
     elif op == 'analyze':
         analyze(argv[2])

@@ -3,6 +3,20 @@ from random import choice
 from utils import alph_rus, write
 
 
+def text_to_words(text):
+    idx = 0
+    words = []
+    while idx < len(text):
+        start = idx
+        while text[idx].isalpha():
+            idx += 1
+        if idx > start:
+            words.append(text[start:idx])
+        else:
+            idx += 1
+    return words
+
+
 class Permutations:
     @staticmethod
     def read_key(skey):
@@ -64,4 +78,34 @@ class Permutations:
             block = enc[b * length: (b + 1) * length]
             # dec += ''.join(block[key.index(idx)] for idx in range(length))
             dec += ''.join(block[el] for el in key)
+        return dec
+
+
+class Vigenere:
+    @staticmethod
+    def _encrypt_char(alph, idx, char, key):
+        if char not in alph:
+            return char
+        else:
+            return alph[(alph.index(char) + alph.index(key[idx % len(key)])) % len(alph)]
+
+    @staticmethod
+    def encrypt(msg, alph, key):
+        enc = ''
+        for idx, char in enumerate(msg):
+            enc += Vigenere._encrypt_char(alph, idx, char, key)
+        return enc
+
+    @staticmethod
+    def _decrypt_char(key, idx, char, alph):
+        if char not in alph:
+            return char
+        else:
+            return alph[(alph.index(char) - alph.index(key[idx % len(key)])) % len(alph)]
+
+    @staticmethod
+    def decrypt(enc, alph, key):
+        dec = ''
+        for idx, char in enumerate(enc):
+            dec += Vigenere._decrypt_char(alph, idx, char, key)
         return dec
