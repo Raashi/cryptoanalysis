@@ -1,22 +1,13 @@
 import json
 
 from utils import *
-from cyphers import Permutations as Perms
+from cyphers import Permutations as Perms, text_to_words
 
 SPACER = '   '
 
 
 def get_banned_bigrams(text):
-    idx = 0
-    words = []
-    while idx < len(text):
-        start = idx
-        while text[idx].isalpha():
-            idx += 1
-        if idx > start:
-            words.append(text[start:idx])
-        else:
-            idx += 1
+    words = text_to_words(text)
     alph = set()
     bigrams = set()
     for word in words:
@@ -88,24 +79,6 @@ def get_tree(table):
     return tree
 
 
-def _display_tree(node, lines, depth):
-    for vertex in node:
-        lines.append((SPACER * depth) + str(vertex))
-        _display_tree(node[vertex], lines, depth + 1)
-
-
-def display_tree(tree: dict):
-    lines = []
-    for start in tree:
-        lines.append(str(start))
-        _display_tree(tree[start], lines, 1)
-    return lines
-
-
-def read_tree(tree):
-    pass
-
-
 def _brute(node, k, container):
     for vertex in node:
         container.append(int(vertex) - 1)
@@ -137,17 +110,20 @@ def main():
         alph, banned = get_banned_bigrams(text)
         write('alph.txt', alph)
         write('banned.txt', '\n'.join(banned))
+    elif op == 'gen':
+        length = int(argv[2])
+        key = Perms.gen_monocycle_key(length)
+        write('key.txt', Perms.str_key(key))
     elif op == 'enc':
         msg = read(argv[2])
-        key = Perms.read_key(argv[3])
-        # msg = msg[:(len(msg) // len(key)) * len(key)]
+        key = Perms.read_key(read(argv[3]))
         while len(msg) % len(key):
             msg += ' '
         enc = Perms.encrypt(msg, key)
         write('enc.txt', enc)
     elif op == 'dec':
         enc = read(argv[2])
-        key = Perms.read_key(argv[3])
+        key = Perms.read_key(read(argv[3]))
         dec = Perms.decrypt(enc, key)
         write('dec.txt', dec)
     elif op == 'table':
@@ -161,7 +137,6 @@ def main():
         for idx, row in enumerate(table):
             table[idx] = list(map(lambda x: bool(int(x)), row.split(' ')))
         tree = get_tree(table)
-        # disp_tree = '\n'.join(display_tree(tree))
         write('tree.txt', json.dumps(tree, indent=4))
     elif op == 'brute':
         enc = read(argv[2])
