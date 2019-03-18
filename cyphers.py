@@ -97,7 +97,7 @@ class Vigenere:
         return enc
 
     @staticmethod
-    def _decrypt_char(key, idx, char, alph):
+    def decrypt_char(alph, idx, char, key):
         if char not in alph:
             return char
         else:
@@ -107,5 +107,5 @@ class Vigenere:
     def decrypt(enc, alph, key):
         dec = ''
         for idx, char in enumerate(enc):
-            dec += Vigenere._decrypt_char(alph, idx, char, key)
+            dec += Vigenere.decrypt_char(alph, idx, char, key)
         return dec
