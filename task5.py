@@ -60,8 +60,9 @@ def a2_decrypt(enc, key, alph):
     return dec
 
 
-def a2(enc, alph, length, word):
-    f = get_file_write('bruted2.txt')
+def attack_word(enc, alph, length, word):
+    f = get_file_write('bruted_word.txt')
+    keys = set()
     for idx_start in range(len(enc) - len(word)):
         if not all(map(lambda char: char in alph, enc[idx_start:idx_start + len(word)])):
             continue
@@ -77,6 +78,10 @@ def a2(enc, alph, length, word):
 
         for _ in range(idx_start % length):
             key = key[-1] + key[:-1]
+
+        if key in keys:
+            continue
+        keys.add(key)
 
         f.write('КЛЮЧ: {}\n{}\n\n'.format(key, a2_decrypt(enc, key, alph)))
     f.close()
@@ -119,11 +124,20 @@ def main():
             f.write('КЛЮЧ : {}\n{}\n\n'.format(key, Vig.decrypt(enc, alph, key)))
             f.write('-------------------------------\n')
         f.close()
-    elif op == 'freq2':
+    elif op == 'freqw':
         text = '\n'.join(map(lambda arg: read(arg).lower(), argv[2:]))
         freqs = frequencies_words(text)
         freqs = map(lambda pair: '{} : {:.4f}'.format(*pair), freqs)
-        write('freq2.txt', '\n'.join(freqs))
+        write('words.txt', '\n'.join(freqs))
+    elif op == 'aw':
+        enc = read(argv[2])
+        alph = read(argv[3])
+        length = int(argv[4])
+        word = argv[5]
+        if not all(c in alph for c in word):
+            print('ОШИБКА: все символы слова должны быть в алфавите')
+            exit(1)
+        attack_word(enc, alph, length, word)
     else:
         print('ОШИБКА: неверный код операции')
 
