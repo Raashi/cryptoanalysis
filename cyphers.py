@@ -1,4 +1,5 @@
-from random import choice
+from random import choice, shuffle
+from itertools import permutations
 
 from utils import alph_rus, write
 
@@ -15,6 +16,20 @@ def text_to_words(text):
         else:
             idx += 1
     return words
+
+
+def frequencies(text, alph):
+    freqs = {}
+    alphas = 0
+    for c in text:
+        if c in alph:
+            freqs[c] = freqs.get(c, 0) + 1
+            alphas += 1
+
+    for alpha, count in freqs.items():
+        freqs[alpha] = count / alphas
+    freqs = list(sorted(freqs.items(), key=lambda pair: pair[1], reverse=True))
+    return freqs
 
 
 class Permutations:
@@ -109,3 +124,61 @@ class Vigenere:
         for idx, char in enumerate(enc):
             dec += Vigenere.decrypt_char(alph, idx, char, key)
         return dec
+
+
+class Replacement:
+    PRECISION = 3
+
+    @staticmethod
+    def gen(alph):
+        key = list(alph)
+        shuffle(key)
+        return ''.join(key)
+
+    @staticmethod
+    def encrypt(msg, key, alph):
+        return ''.join(map(lambda c: key[alph.index(c)] if c in alph else c, msg))
+
+    @staticmethod
+    def decrypt(enc, key, alph):
+        return ''.join(map(lambda c: alph[key.index(c)] if c in alph else c, enc))
+
+    @staticmethod
+    def brute(groups, idx, cont):
+        if idx == len(groups):
+            yield cont
+            return
+        for perm in permutations(groups[idx]):
+            cont.extend(perm)
+            yield from Replacement.brute(groups, idx + 1, cont)
+            for _ in range(len(perm)):
+                cont.pop()
+
+    @staticmethod
+    def images(freq_true, freq_enc, prec):
+        freq_true = ''.join(map(lambda pair: pair[0], freq_true))
+
+        for idx, (letter, freq) in enumerate(freq_enc):
+            freq_new = freq[:2] + freq[2:2 + prec + 1]
+            freq_enc[idx] = (letter, freq_new)
+
+        alph = ''.join(sorted(freq_true))
+        for c in alph:
+            if not any(pair[0] == c for pair in freq_enc):
+                freq_enc.append((c, '0.0'))
+
+        groups = []
+        while len(freq_enc):
+            groups.append([freq_enc[0][0]])
+            value = freq_enc[0][1]
+            freq_enc = freq_enc[1:]
+            while len(freq_enc) and freq_enc[0][1] == value:
+                groups[-1].append(freq_enc[0][0])
+                freq_enc = freq_enc[1:]
+
+        res = []
+        for key in Replacement.brute(groups, 0, []):
+            key_str = ''.join(key)
+            key_good = ''.join([key_str[freq_true.index(c)] for c in alph])
+            res.append(key_good)
+        return res
