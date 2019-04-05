@@ -145,12 +145,11 @@ class Replacement:
 
     @staticmethod
     def attack_shift(freq_true, freq_enc, count):
-        freq_true = ''.join(map(lambda pair: pair[0], freq_true))
         alph = ''.join(sorted(freq_true))
 
         keys = []
-        for letter, freq in freq_enc[:count]:
-            shift = alph.index(letter) - alph.index(freq_true[0][0])
+        for letter in freq_enc[:count]:
+            shift = alph.index(letter) - alph.index(freq_true[0])
             keys.append(alph[shift:] + alph[:shift])
         return keys
 

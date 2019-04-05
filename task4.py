@@ -46,10 +46,10 @@ def main():
         write('keys.txt', '\n'.join(res))
     elif op == 'a-sh':
         freq_true = map(lambda pair: pair.split(':'), read(argv[2]).split('\n'))
-        freq_true = [(k[0], v) for k, v in freq_true]
+        freq_true = ''.join(k[0] for k, v in freq_true)
 
         freq_enc = map(lambda pair: pair.split(':'), read(argv[3]).split('\n'))
-        freq_enc = [(k[0], v) for k, v in freq_enc]
+        freq_enc = ''.join(k[0] for k, v in freq_enc)
 
         count = int(argv[4]) if len(argv) > 4 else 5
 

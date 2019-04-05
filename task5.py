@@ -1,30 +1,38 @@
 from itertools import product
 
 from utils import *
-from cyphers import Vigenere as Vig, text_to_words, frequencies
+from cyphers import Vigenere as Vig, text_to_words, frequencies, Replacement as Rep
 
 
-def a1(enc, freqs, alph, length):
+CHARS_TO_ATTACK = 3
+
+
+def attack_text(enc, freqs, length):
+    alph = ''.join(sorted(freqs))
+
     cols = [{"idxs": []} for _ in range(length)]
     for idx, char in enumerate(enc):
         if char in alph:
             cols[idx % length]["idxs"].append(char)
 
-    keys = [[] for _ in range(length)]
     for col_idx, col in enumerate(cols):
         col_freqs = frequencies(col["idxs"], alph)
-        cols[col_idx]["freqs"] = col_freqs
-        # пробуем самым частым буквам криптограммы подставить самую частую букву алфавита
-        # берем первые 3
-        for c_idx, (c, c_freq) in enumerate(col_freqs[:3]):
-            keys[col_idx].append(alph[(alph.index(c) - alph.index(freqs[0][0])) % len(alph)])
+        col_freqs = ''.join(k for k, v in col_freqs)
+        col["freqs"] = col_freqs
 
-    f = get_file_write('bruted1.txt')
-    f.write('\n'.join(map(str, keys)) + '\n')
-    for comb in product(*keys):
+        col["keys"] = []
+        for key in Rep.attack_shift(freqs, col_freqs, CHARS_TO_ATTACK):
+            col["keys"].append(alph[alph.index(key[0])])
+
+    groups = [col["keys"] for col in cols]
+    for item in groups:
+        print(item)
+
+    keys = []
+    for comb in product(*groups):
         key = ''.join(comb)
-        f.write('КЛЮЧ: {}\n{}\n\n'.format(key, Vig.decrypt(enc, alph, key)))
-    f.close()
+        keys.append(key)
+    return keys
 
 
 def frequencies_words(text):
@@ -77,12 +85,12 @@ def a2(enc, alph, length, word):
 def main():
     op = argv[1]
 
-    if op == 'freq1':
-        alph = read(argv[2])
-        text = '\n'.join(map(lambda arg: read(arg).lower(), argv[3:]))
+    if op == 'freq':
+        text = read(argv[2]).lower()
+        alph = read(argv[3])
         freqs = frequencies(text, alph)
         freqs = map(lambda pair: '{} : {:.4f}'.format(*pair), freqs)
-        write('freq1.txt', '\n'.join(freqs))
+        write(argv[4], '\n'.join(freqs))
     elif op == 'enc':
         msg = read(argv[2]).lower()
         key = read_text(argv[3])[0]
@@ -95,29 +103,27 @@ def main():
         alph = read(argv[4])
         dec = Vig.decrypt(enc, alph, key)
         write('dec.txt', dec)
-    elif op == 'a1':
+    elif op == 'at':
         enc = read(argv[2])
         freqs = map(lambda pair: pair.split(':'), read(argv[3]).split('\n'))
-        freqs = [(k[0], float(v)) for k, v in freqs]
+        freqs = ''.join(k[0] for k, v in freqs)
+        length = int(argv[4])
+        keys = attack_text(enc, freqs, length)
+        write('keys.txt', '\n'.join(keys))
+    elif op == 'brute':
+        enc = read(argv[2])
+        keys = read(argv[3]).split('\n')
         alph = read(argv[4])
-        length = int(argv[5])
-        a1(enc, freqs, alph, length)
+        f = get_file_write('bruted.txt')
+        for key in keys:
+            f.write('КЛЮЧ : {}\n{}\n\n'.format(key, Vig.decrypt(enc, alph, key)))
+            f.write('-------------------------------\n')
+        f.close()
     elif op == 'freq2':
         text = '\n'.join(map(lambda arg: read(arg).lower(), argv[2:]))
         freqs = frequencies_words(text)
         freqs = map(lambda pair: '{} : {:.4f}'.format(*pair), freqs)
         write('freq2.txt', '\n'.join(freqs))
-    elif op == 'a2':
-        enc = read(argv[2])
-        # freqs = map(lambda pair: pair.split(':'), read(argv[3]).split('\n'))
-        # freqs = [(k.strip(), float(v)) for k, v in freqs]
-        alph = read(argv[3])
-        length = int(argv[4])
-        word = argv[5]
-        if not all(map(lambda c: c in alph, word)):
-            print('В слове есть символы не из алфавита')
-            exit(1)
-        a2(enc, alph, length, word)
     else:
         print('ОШИБКА: неверный код операции')
 
