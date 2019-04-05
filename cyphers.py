@@ -144,6 +144,17 @@ class Replacement:
         return ''.join(map(lambda c: alph[key.index(c)] if c in alph else c, enc))
 
     @staticmethod
+    def attack_shift(freq_true, freq_enc, count):
+        freq_true = ''.join(map(lambda pair: pair[0], freq_true))
+        alph = ''.join(sorted(freq_true))
+
+        keys = []
+        for letter, freq in freq_enc[:count]:
+            shift = alph.index(letter) - alph.index(freq_true[0][0])
+            keys.append(alph[shift:] + alph[:shift])
+        return keys
+
+    @staticmethod
     def brute(groups, idx, cont):
         if idx == len(groups):
             yield cont
@@ -175,6 +186,9 @@ class Replacement:
             while len(freq_enc) and freq_enc[0][1] == value:
                 groups[-1].append(freq_enc[0][0])
                 freq_enc = freq_enc[1:]
+
+        for item in groups:
+            print(item)
 
         res = []
         for key in Replacement.brute(groups, 0, []):
