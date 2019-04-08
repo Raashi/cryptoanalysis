@@ -136,22 +136,35 @@ class Replacement:
         return ''.join(key)
 
     @staticmethod
+    def handle_key(key, alph):
+        try:
+            key = int(key)
+            key = alph[key:] + alph[:key]
+        except ValueError:
+            pass
+        return key
+
+    @staticmethod
     def encrypt(msg, key, alph):
+        key = Replacement.handle_key(key, alph)
         return ''.join(map(lambda c: key[alph.index(c)] if c in alph else c, msg))
 
     @staticmethod
     def decrypt(enc, key, alph):
+        key = Replacement.handle_key(key, alph)
         return ''.join(map(lambda c: alph[key.index(c)] if c in alph else c, enc))
 
     @staticmethod
-    def attack_shift(freq_true, freq_enc, count):
-        alph = ''.join(sorted(freq_true))
-
-        keys = []
-        for letter in freq_enc[:count]:
-            shift = alph.index(letter) - alph.index(freq_true[0])
-            keys.append(alph[shift:] + alph[:shift])
-        return keys
+    def attack_shift(freq_true, freq_enc, prec, alph):
+        keys = Replacement.images(freq_true, freq_enc, prec, alph)
+        shifts = {}
+        for key in keys:
+            for idx, letter in enumerate(key):
+                shift = (alph.index(letter) - idx) % len(alph)
+                shifts[shift] = shifts.get(shift, 0) + 1
+        print(shifts)
+        shifts = list(sorted(shifts.keys(), key=lambda x: shifts[x], reverse=True))
+        return list(map(str, shifts[:5]))
 
     @staticmethod
     def brute(groups, idx, cont):
@@ -165,14 +178,13 @@ class Replacement:
                 cont.pop()
 
     @staticmethod
-    def images(freq_true, freq_enc, prec):
+    def images(freq_true, freq_enc, prec, alph):
         freq_true = ''.join(map(lambda pair: pair[0], freq_true))
 
         for idx, (letter, freq) in enumerate(freq_enc):
             freq_new = freq[:2] + freq[2:2 + prec + 1]
             freq_enc[idx] = (letter, freq_new)
 
-        alph = ''.join(sorted(freq_true))
         for c in alph:
             if not any(pair[0] == c for pair in freq_enc):
                 freq_enc.append((c, '0.0'))

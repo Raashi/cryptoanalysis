@@ -12,9 +12,7 @@ def main():
         write('key.txt', Rep.gen(alph))
     elif op == 'gens':
         alph = read(argv[2])
-        shift = randint(0, len(alph) - 1)
-        alph = alph[shift:] + alph[:shift]
-        write('key.txt', alph)
+        write('key.txt', str(randint(1, len(alph) - 1)))
     elif op == 'enc':
         msg = read(argv[2]).lower()
         key = read(argv[3])
@@ -40,20 +38,24 @@ def main():
         freq_enc = map(lambda pair: pair.split(':'), read(argv[3]).split('\n'))
         freq_enc = [(k[0], v) for k, v in freq_enc]
 
-        precision = int(argv[4]) if len(argv) > 4 else 3
+        alph = read(argv[4])
 
-        res = Rep.images(freq_true, freq_enc, precision)
+        precision = int(argv[5]) if len(argv) > 5 else 3
+
+        res = Rep.images(freq_true, freq_enc, precision, alph)
         write('keys.txt', '\n'.join(res))
     elif op == 'a-sh':
         freq_true = map(lambda pair: pair.split(':'), read(argv[2]).split('\n'))
-        freq_true = ''.join(k[0] for k, v in freq_true)
+        freq_true = [(k[0], v) for k, v in freq_true]
 
         freq_enc = map(lambda pair: pair.split(':'), read(argv[3]).split('\n'))
-        freq_enc = ''.join(k[0] for k, v in freq_enc)
+        freq_enc = [(k[0], v) for k, v in freq_enc]
 
-        count = int(argv[4]) if len(argv) > 4 else 5
+        alph = read(argv[4])
 
-        keys = Rep.attack_shift(freq_true, freq_enc, count)
+        count = int(argv[5]) if len(argv) > 5 else 5
+
+        keys = Rep.attack_shift(freq_true, freq_enc, count, alph)
         write('keys.txt', '\n'.join(keys))
     elif op == 'brute':
         enc = read(argv[2])
