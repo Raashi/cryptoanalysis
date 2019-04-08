@@ -1,37 +1,39 @@
 from itertools import product
 
 from utils import *
-from cyphers import Vigenere as Vig, text_to_words, frequencies, Replacement as Rep
+from cyphers import Vigenere as Vig, text_to_words, frequencies, \
+    str_frequencies, read_frequencies, Replacement as Rep
 
 
-CHARS_TO_ATTACK = 3
+CHARS_TO_ATTACK = 4
 
 
-def attack_text(enc, freqs, length):
-    alph = ''.join(sorted(freqs))
-
+def attack_text(enc, freqs, alph, length):
     cols = [{"idxs": []} for _ in range(length)]
     for idx, char in enumerate(enc):
         if char in alph:
             cols[idx % length]["idxs"].append(char)
 
     for col_idx, col in enumerate(cols):
-        col_freqs = frequencies(col["idxs"], alph)
-        col_freqs = ''.join(k for k, v in col_freqs)
-        col["freqs"] = col_freqs
+        col["freqs"] = read_frequencies(str_frequencies(frequencies(col["idxs"], alph)))
 
         col["keys"] = []
-        for key in Rep.attack_shift(freqs, col_freqs, CHARS_TO_ATTACK):
-            col["keys"].append(alph[alph.index(key[0])])
+        for key in Rep.attack_shift(freqs, col["freqs"], alph, CHARS_TO_ATTACK):
+            col["keys"].append(key)
+        col["keys"] = list(map(int, col["keys"][1:]))
 
     groups = [col["keys"] for col in cols]
     for item in groups:
         print(item)
 
     keys = []
-    for comb in product(*groups):
-        key = ''.join(comb)
-        keys.append(key)
+    keys_set = set()
+    for count in range(len(groups[0])):
+        for comb in product(*list(map(lambda x: x[:count], groups))):
+            key = ''.join(map(lambda x: alph[x], comb))
+            if key not in keys_set:
+                keys.append(key)
+                keys_set.add(key)
     return keys
 
 
@@ -40,8 +42,7 @@ def frequencies_words(text):
     freqs = {}
     for word in words:
         freqs[word] = freqs.get(word, 0) + 1
-    # freqs = {word: words.count(word) for word in set(words)}
-    freqs = {word: word_count / len(words) for word, word_count in freqs.items() if word_count > 1}
+    freqs = {word: word_count / len(words) for word, word_count in freqs.items() if word_count > 1 and len(word) > 2}
     freqs = list(sorted(freqs.items(), key=lambda pair: pair[1], reverse=True))
     return freqs[:1000]
 
@@ -60,8 +61,8 @@ def a2_decrypt(enc, key, alph):
     return dec
 
 
-def attack_word(enc, alph, length, word):
-    f = get_file_write('bruted_word.txt')
+def attack_word(enc, alph, length, word, fin=None):
+    f = get_file_write('bruted_word.txt') if fin is None else fin
     keys = set()
     for idx_start in range(len(enc) - len(word)):
         if not all(map(lambda char: char in alph, enc[idx_start:idx_start + len(word)])):
@@ -84,7 +85,8 @@ def attack_word(enc, alph, length, word):
         keys.add(key)
 
         f.write('КЛЮЧ: {}\n{}\n\n'.format(key, a2_decrypt(enc, key, alph)))
-    f.close()
+    if fin is None:
+        f.close()
 
 
 def main():
@@ -93,9 +95,7 @@ def main():
     if op == 'freq':
         text = read(argv[2]).lower()
         alph = read(argv[3])
-        freqs = frequencies(text, alph)
-        freqs = map(lambda pair: '{} : {:.4f}'.format(*pair), freqs)
-        write(argv[4], '\n'.join(freqs))
+        write(argv[4], str_frequencies(frequencies(text, alph)))
     elif op == 'enc':
         msg = read(argv[2]).lower()
         key = read_text(argv[3])[0]
@@ -108,12 +108,12 @@ def main():
         alph = read(argv[4])
         dec = Vig.decrypt(enc, alph, key)
         write('dec.txt', dec)
-    elif op == 'at':
+    elif op == 'af':
         enc = read(argv[2])
-        freqs = map(lambda pair: pair.split(':'), read(argv[3]).split('\n'))
-        freqs = ''.join(k[0] for k, v in freqs)
-        length = int(argv[4])
-        keys = attack_text(enc, freqs, length)
+        freqs = read_frequencies(read(argv[3]))
+        alph = read(argv[4])
+        length = int(argv[5])
+        keys = attack_text(enc, freqs, alph, length)
         write('keys.txt', '\n'.join(keys))
     elif op == 'brute':
         enc = read(argv[2])
@@ -138,6 +138,17 @@ def main():
             print('ОШИБКА: все символы слова должны быть в алфавите')
             exit(1)
         attack_word(enc, alph, length, word)
+    elif op == 'awb':
+        enc = read(argv[2])
+        alph = read(argv[3])
+        length = int(argv[4])
+        words = read(argv[5]).split('\n')
+        words = list(map(lambda x: x.split(':')[0].strip(), words))
+
+        f = get_file_write('bruted_word.txt')
+        for word in words[:2]:
+            attack_word(enc, alph, length, word, f)
+        f.close()
     else:
         print('ОШИБКА: неверный код операции')
 

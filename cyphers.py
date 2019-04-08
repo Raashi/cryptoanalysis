@@ -199,11 +199,13 @@ class Replacement:
             groups.append([freq_enc[0][0]])
             value = freq_enc[0][1]
             freq_enc = freq_enc[1:]
-            while len(freq_enc) and freq_enc[0][1] == value:
+            while len(freq_enc) and freq_enc[0][1] == value and float(value) > 0:
                 groups[-1].append(freq_enc[0][0])
                 freq_enc = freq_enc[1:]
 
         res = [''.join(map(lambda pair: pair[0], freq_true))]
         for key in Replacement.brute(groups, 0, []):
             res.append(''.join(key))
+            if len(res) > 1000:
+                break
         return res
