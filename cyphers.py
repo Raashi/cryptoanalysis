@@ -1,5 +1,5 @@
 from random import choice, shuffle
-from itertools import permutations
+from itertools import permutations, product
 
 from utils import alph_rus, write
 
@@ -19,17 +19,27 @@ def text_to_words(text):
 
 
 def frequencies(text, alph):
-    freqs = {}
+    freqs = {letter: 0 for letter in alph}
     alphas = 0
     for c in text:
         if c in alph:
-            freqs[c] = freqs.get(c, 0) + 1
+            freqs[c] += 1
             alphas += 1
 
     for alpha, count in freqs.items():
         freqs[alpha] = count / alphas
     freqs = list(sorted(freqs.items(), key=lambda pair: pair[1], reverse=True))
-    return freqs
+    return freqs  # [('e', 0.0115712392), ..., (..)]
+
+
+def read_frequencies(data):
+    freqs = map(lambda pair: pair.split(':'), data.split('\n'))
+    return [(k[0], v) for k, v in freqs]  # [('e', '0.01156'), ..., (..)]
+
+
+def str_frequencies(freqs):
+    res = map(lambda pair: '{} : {:.5f}'.format(*pair), freqs)
+    return '\n'.join(res)  # e : 0.0116
 
 
 class Permutations:
@@ -80,7 +90,6 @@ class Permutations:
         enc = ''
         for b in range(len(msg) // length):
             block = msg[b * length: (b + 1) * length]
-            # enc += ''.join(block[el] for el in key)
             enc += ''.join(block[key.index(idx)] for idx in range(length))
         return enc
 
@@ -91,7 +100,6 @@ class Permutations:
         dec = ''
         for b in range(len(enc) // length):
             block = enc[b * length: (b + 1) * length]
-            # dec += ''.join(block[key.index(idx)] for idx in range(length))
             dec += ''.join(block[el] for el in key)
         return dec
 
@@ -155,16 +163,17 @@ class Replacement:
         return ''.join(map(lambda c: alph[key.index(c)] if c in alph else c, enc))
 
     @staticmethod
-    def attack_shift(freq_true, freq_enc, prec, alph):
-        keys = Replacement.images(freq_true, freq_enc, prec, alph)
+    def attack_shift(freq_true, freq_enc, alph, prec):
+        keys = Replacement.images(freq_true, freq_enc, prec)
         shifts = {}
         for key in keys:
+            key = ''.join(sorted(key, key=lambda x: alph.index(freq_true[key.index(x)][0])))
             for idx, letter in enumerate(key):
                 shift = (alph.index(letter) - idx) % len(alph)
                 shifts[shift] = shifts.get(shift, 0) + 1
         print(shifts)
         shifts = list(sorted(shifts.keys(), key=lambda x: shifts[x], reverse=True))
-        return list(map(str, shifts[:5]))
+        return [alph] + list(map(str, shifts[:5]))
 
     @staticmethod
     def brute(groups, idx, cont):
@@ -178,16 +187,12 @@ class Replacement:
                 cont.pop()
 
     @staticmethod
-    def images(freq_true, freq_enc, prec, alph):
+    def images(freq_true, freq_enc, prec):
         freq_true = ''.join(map(lambda pair: pair[0], freq_true))
 
         for idx, (letter, freq) in enumerate(freq_enc):
             freq_new = freq[:2] + freq[2:2 + prec + 1]
             freq_enc[idx] = (letter, freq_new)
-
-        for c in alph:
-            if not any(pair[0] == c for pair in freq_enc):
-                freq_enc.append((c, '0.0'))
 
         groups = []
         while len(freq_enc):
@@ -198,12 +203,7 @@ class Replacement:
                 groups[-1].append(freq_enc[0][0])
                 freq_enc = freq_enc[1:]
 
-        for item in groups:
-            print(item)
-
-        res = []
+        res = [''.join(map(lambda pair: pair[0], freq_true))]
         for key in Replacement.brute(groups, 0, []):
-            key_str = ''.join(key)
-            key_good = ''.join([key_str[freq_true.index(c)] for c in alph])
-            res.append(key_good)
+            res.append(''.join(key))
         return res

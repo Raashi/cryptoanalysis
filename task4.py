@@ -1,7 +1,7 @@
 from random import randint
 
 from utils import *
-from cyphers import Replacement as Rep, frequencies
+from cyphers import Replacement as Rep, frequencies, read_frequencies, str_frequencies
 
 
 def main():
@@ -9,58 +9,44 @@ def main():
 
     if op == 'genp':
         alph = read(argv[2])
-        write('key.txt', Rep.gen(alph))
+        write('key.txt', alph + '\n' + Rep.gen(alph))
     elif op == 'gens':
         alph = read(argv[2])
-        write('key.txt', str(randint(1, len(alph) - 1)))
+        write('key.txt', alph + '\n' + str(randint(1, len(alph) - 1)))
     elif op == 'enc':
         msg = read(argv[2]).lower()
-        key = read(argv[3])
-        alph = read(argv[4])
+        alph, key = read(argv[3]).split('\n')
         enc = Rep.encrypt(msg, key, alph)
         write('enc.txt', enc)
     elif op == 'dec':
         enc = read(argv[2]).lower()
-        key = read(argv[3])
-        alph = read(argv[4])
+        alph, key = read(argv[3]).split('\n')
         dec = Rep.decrypt(enc, key, alph)
         write('dec.txt', dec)
     elif op == 'freq':
         text = read(argv[2]).lower()
         alph = read(argv[3])
         freqs = frequencies(text, alph)
-        freqs = map(lambda pair: '{} : {:.4f}'.format(*pair), freqs)
-        write(argv[4], '\n'.join(freqs))
+        write(argv[4], str_frequencies(freqs))
     elif op == 'a-perm':
-        freq_true = map(lambda pair: pair.split(':'), read(argv[2]).split('\n'))
-        freq_true = [(k[0], v) for k, v in freq_true]
+        freq_true = read_frequencies(read(argv[2]))
+        freq_enc = read_frequencies(read(argv[3]))
+        precision = int(argv[4]) if len(argv) > 4 else 3
 
-        freq_enc = map(lambda pair: pair.split(':'), read(argv[3]).split('\n'))
-        freq_enc = [(k[0], v) for k, v in freq_enc]
-
-        alph = read(argv[4])
-
-        precision = int(argv[5]) if len(argv) > 5 else 3
-
-        res = Rep.images(freq_true, freq_enc, precision, alph)
+        res = Rep.images(freq_true, freq_enc, precision)
         write('keys.txt', '\n'.join(res))
     elif op == 'a-sh':
-        freq_true = map(lambda pair: pair.split(':'), read(argv[2]).split('\n'))
-        freq_true = [(k[0], v) for k, v in freq_true]
-
-        freq_enc = map(lambda pair: pair.split(':'), read(argv[3]).split('\n'))
-        freq_enc = [(k[0], v) for k, v in freq_enc]
-
+        freq_true = read_frequencies(read(argv[2]))
+        freq_enc = read_frequencies(read(argv[3]))
         alph = read(argv[4])
+        prec = int(argv[5]) if len(argv) > 5 else 5
 
-        count = int(argv[5]) if len(argv) > 5 else 5
-
-        keys = Rep.attack_shift(freq_true, freq_enc, count, alph)
+        keys = Rep.attack_shift(freq_true, freq_enc, alph, prec)
         write('keys.txt', '\n'.join(keys))
     elif op == 'brute':
         enc = read(argv[2])
         keys = read(argv[3]).split('\n')
-        alph = read(argv[4])
+        alph, keys = keys[0], keys[1:]
         f = get_file_write('bruted.txt')
         for key in keys:
             f.write('КЛЮЧ : {}\n{}\n\n'.format(key, Rep.decrypt(enc, key, alph)))
