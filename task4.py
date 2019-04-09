@@ -1,7 +1,7 @@
 from random import randint
 
 from utils import *
-from cyphers import Replacement as Rep, frequencies, read_frequencies, str_frequencies
+from cyphers import Replacement as Rep, get_freqs, read_freqs, str_freqs
 
 
 def main():
@@ -26,18 +26,18 @@ def main():
     elif op == 'freq':
         text = read(argv[2]).lower()
         alph = read(argv[3])
-        freqs = frequencies(text, alph)
-        write(argv[4], str_frequencies(freqs))
+        freqs = get_freqs(text, alph)
+        write(argv[4], str_freqs(freqs))
     elif op == 'a-perm':
-        freq_true = read_frequencies(read(argv[2]))
-        freq_enc = read_frequencies(read(argv[3]))
+        freq_true = read_freqs(read(argv[2]))
+        freq_enc = read_freqs(read(argv[3]))
         precision = int(argv[4]) if len(argv) > 4 else 3
 
         res = Rep.images(freq_true, freq_enc, precision)
         write('keys.txt', '\n'.join(res))
     elif op == 'a-sh':
-        freq_true = read_frequencies(read(argv[2]))
-        freq_enc = read_frequencies(read(argv[3]))
+        freq_true = read_freqs(read(argv[2]))
+        freq_enc = read_freqs(read(argv[3]))
         alph = read(argv[4])
         prec = int(argv[5]) if len(argv) > 5 else 5
 

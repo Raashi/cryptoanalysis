@@ -36,7 +36,7 @@ def read(fn):
 
 
 def write(fn, content, root=False):
-    path = join(DIR_MODULE, fn) if not root else fn
+    path = join(DIR_MODULE, fn) if (not root) or ('-r' not in argv) else fn
     with open(path, 'w', encoding='utf-8') as f:
         f.write(content)
 

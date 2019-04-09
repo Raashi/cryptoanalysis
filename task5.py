@@ -1,8 +1,8 @@
 from itertools import product
 
 from utils import *
-from cyphers import Vigenere as Vig, text_to_words, frequencies, \
-    str_frequencies, read_frequencies, Replacement as Rep
+from cyphers import Vigenere as Vig, text_to_words, get_freqs, \
+    str_freqs, read_freqs, Replacement as Rep
 
 
 CHARS_TO_ATTACK = 4
@@ -15,7 +15,7 @@ def attack_text(enc, freqs, alph, length):
             cols[idx % length]["idxs"].append(char)
 
     for col_idx, col in enumerate(cols):
-        col["freqs"] = read_frequencies(str_frequencies(frequencies(col["idxs"], alph)))
+        col["freqs"] = read_freqs(str_freqs(get_freqs(col["idxs"], alph)))
 
         col["keys"] = []
         for key in Rep.attack_shift(freqs, col["freqs"], alph, CHARS_TO_ATTACK):
@@ -95,7 +95,7 @@ def main():
     if op == 'freq':
         text = read(argv[2]).lower()
         alph = read(argv[3])
-        write(argv[4], str_frequencies(frequencies(text, alph)))
+        write(argv[4], str_freqs(get_freqs(text, alph)))
     elif op == 'enc':
         msg = read(argv[2]).lower()
         key = read_text(argv[3])[0]
@@ -110,7 +110,7 @@ def main():
         write('dec.txt', dec)
     elif op == 'af':
         enc = read(argv[2])
-        freqs = read_frequencies(read(argv[3]))
+        freqs = read_freqs(read(argv[3]))
         alph = read(argv[4])
         length = int(argv[5])
         keys = attack_text(enc, freqs, alph, length)

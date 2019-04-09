@@ -18,7 +18,7 @@ def text_to_words(text):
     return words
 
 
-def frequencies(text, alph):
+def get_freqs(text, alph):
     freqs = {letter: 0 for letter in alph}
     alphas = 0
     for c in text:
@@ -32,12 +32,12 @@ def frequencies(text, alph):
     return freqs  # [('e', 0.0115712392), ..., (..)]
 
 
-def read_frequencies(data):
+def read_freqs(data):
     freqs = map(lambda pair: pair.split(':'), data.split('\n'))
     return [(k[0], v) for k, v in freqs]  # [('e', '0.01156'), ..., (..)]
 
 
-def str_frequencies(freqs):
+def str_freqs(freqs):
     res = map(lambda pair: '{} : {:.5f}'.format(*pair), freqs)
     return '\n'.join(res)  # e : 0.0116
 
