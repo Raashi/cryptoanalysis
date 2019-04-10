@@ -173,7 +173,7 @@ class Replacement:
                 shifts[shift] = shifts.get(shift, 0) + 1
         print(shifts)
         shifts = list(sorted(shifts.keys(), key=lambda x: shifts[x], reverse=True))
-        return [alph] + list(map(str, shifts[:5]))
+        return [alph] + list(map(str, shifts[:3]))
 
     @staticmethod
     def brute(groups, idx, cont):
