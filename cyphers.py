@@ -171,7 +171,6 @@ class Replacement:
             for idx, letter in enumerate(key):
                 shift = (alph.index(letter) - idx) % len(alph)
                 shifts[shift] = shifts.get(shift, 0) + 1
-        print(shifts)
         shifts = list(sorted(shifts.keys(), key=lambda x: shifts[x], reverse=True))
         return [alph] + list(map(str, shifts[:3]))
 
