@@ -36,13 +36,13 @@ def get_w(mat1, mat2):
 
 def attack(enc, alph, bi, length):
     key0 = ''.join(choice(alph) for _ in range(length))
+    print('Случайный ключ:', key0)
     key = ''
     while key != key0:
         key = key0
         dec = Vig.decrypt(enc, alph, key)
         bi_dec = get_freqs_bigrams(dec, alph)
         wk = get_w(bi_dec, bi)
-        print(wk)
 
         key0 = key
         for idx_ki in range(length):
@@ -56,7 +56,7 @@ def attack(enc, alph, bi, length):
             if wk_ki_min <= wk:
                 ki_true = alph[wks_ki.index(wk_ki_min)]
                 key0 = key0[:idx_ki] + ki_true + key0[idx_ki + 1:]
-        print(key0)
+        print('{:.7f}'.format(wk), key0)
     return key
 
 
@@ -86,8 +86,8 @@ def main():
         bi = [[float(el) for el in row.split(' ')] for row in bi]
         length = int(argv[5])
         key = attack(enc, alph, bi, length)
-        print(key)
-        # write('keys.txt', '\n'.join(keys))
+        print('Вычисленный ключ:', key)
+        write('keys.txt', key)
     elif op == 'brute':
         enc = read(argv[2])
         keys = read(argv[3]).split('\n')
