@@ -1,7 +1,7 @@
 from random import choice
 
 from utils import *
-from cyphers import Vigenere as Vig
+import cyphers.vigenere as vig
 
 
 def get_freqs_bigrams(text, alph):
@@ -40,7 +40,7 @@ def attack(enc, alph, bi, length):
     key = ''
     while key != key0:
         key = key0
-        dec = Vig.decrypt(enc, alph, key)
+        dec = vig.decrypt(enc, alph, key)
         bi_dec = get_freqs_bigrams(dec, alph)
         wk = get_w(bi_dec, bi)
 
@@ -49,7 +49,7 @@ def attack(enc, alph, bi, length):
             wks_ki = []
             for letter in alph:
                 key_ki = key0[:idx_ki] + letter + key0[idx_ki + 1:]
-                dec_ki = Vig.decrypt(enc, alph, key_ki)
+                dec_ki = vig.decrypt(enc, alph, key_ki)
                 wk_ki = get_w(get_freqs_bigrams(dec_ki, alph), bi)
                 wks_ki.append(wk_ki)
             wk_ki_min = min(wks_ki)
@@ -62,9 +62,9 @@ def attack(enc, alph, bi, length):
 
 def main():
     if op == 'enc':
-        Vig.exec_encrypt()
+        vig.exec_encrypt()
     elif op == 'dec':
-        Vig.exec_decrypt()
+        vig.exec_decrypt()
     elif op == 'bi':
         text = read(argv[2]).lower()
         alph = read(argv[3])

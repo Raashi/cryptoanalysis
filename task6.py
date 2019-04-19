@@ -1,7 +1,8 @@
 from math import sqrt
 
 from utils import *
-from cyphers import Vigenere as Vig, get_freqs, write_freqs, read_freqs
+from cyphers import get_freqs, write_freqs, read_freqs
+import cyphers.vigenere as vig
 
 
 def get_h0(text, alph):
@@ -43,9 +44,9 @@ def get_distance(x, y):
 
 def main():
     if op == 'enc':
-        Vig.exec_encrypt()
+        vig.exec_encrypt()
     elif op == 'dec':
-        Vig.exec_decrypt()
+        vig.exec_decrypt()
     elif op == 'h0':
         text = read(argv[2]).lower()
         alph = read(argv[3])

@@ -1,5 +1,5 @@
 from utils import *
-from cyphers import Permutations as Perms
+import cyphers.permutation as perm
 
 
 def get_seqs(enc, length) -> dict:
@@ -38,8 +38,8 @@ def _brute(length, container: list, idx_cur):
             yield from _brute(length, container, idx_next)
         else:
             container[idx_next] = 0
-            if not Perms.is_monocycle_key(container):
-                print('ОШИБКА: неверно сгенерирован ключ длины {}: {}'.format(length, Perms.str_key(container)))
+            if not perm.is_monocycle_key(container):
+                print('ОШИБКА: неверно сгенерирован ключ длины {}: {}'.format(length, perm.str_key(container)))
             yield container
             container[idx_next] = None
     container[idx_cur] = None
@@ -49,20 +49,20 @@ def brute(enc, length):
     container = [None] * length
     f = get_file_write('bruted.txt')
     for key in _brute(length, container, 0):
-        print(Perms.str_key(key) + '\r', end='')
-        dec = Perms.decrypt(enc, key)
-        f.write(Perms.str_key(key) + '\n')
+        print(perm.str_key(key) + '\r', end='')
+        dec = perm.decrypt(enc, key)
+        f.write(perm.str_key(key) + '\n')
         f.write(dec + '\n\n')
     f.close()
 
 
 def main():
     if op == 'gen':
-        Perms.exec_gen_mono_key()
+        perm.exec_gen_mono_key()
     elif op == 'enc':
-        Perms.exec_encrypt()
+        perm.exec_encrypt()
     elif op == 'dec':
-        Perms.exec_decrypt()
+        perm.exec_decrypt()
     elif op == 'kas':
         enc = read(argv[2]).lower()
         print('Количество символов: {}'.format(len(enc)))

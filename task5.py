@@ -1,8 +1,9 @@
 from itertools import product
 
 from utils import *
-from cyphers import Vigenere as Vig, text_to_words, get_freqs, \
-    read_freqs, Replacement as Rep, exec_freqs
+from cyphers import text_to_words, get_freqs, read_freqs, exec_freqs
+import cyphers.vigenere as vig
+import cyphers.replacement as rep
 
 
 CHARS_TO_ATTACK = 4
@@ -18,7 +19,7 @@ def attack_text(enc, freqs, alph, length):
         col["freqs"] = get_freqs(col["idxs"], alph)
 
         col["keys"] = []
-        for key in Rep.attack_shift(freqs, col["freqs"], alph, CHARS_TO_ATTACK):
+        for key in rep.attack_shift(freqs, col["freqs"], alph, CHARS_TO_ATTACK):
             col["keys"].append(key)
         col["keys"] = list(map(int, col["keys"][1:]))
 
@@ -51,7 +52,7 @@ def a2_decrypt_char(idx, char, key, alph):
     if key[idx % len(key)] == '*':
         return '*'
     else:
-        return Vig.decrypt_char(alph, idx, char, key)
+        return vig.decrypt_char(alph, idx, char, key)
 
 
 def a2_decrypt(enc, key, alph):
@@ -94,9 +95,9 @@ def main():
     if op == 'freq':
         exec_freqs()
     elif op == 'enc':
-        Vig.exec_encrypt()
+        vig.exec_encrypt()
     elif op == 'dec':
-        Vig.exec_decrypt()
+        vig.exec_decrypt()
     elif op == 'af':
         enc = read(argv[2])
         freqs = read_freqs(argv[3])
@@ -105,7 +106,7 @@ def main():
         keys = attack_text(enc, freqs, alph, length)
         write('keys.txt', '\n'.join(keys))
     elif op == 'brute':
-        Vig.exec_brute()
+        vig.exec_brute()
     elif op == 'freqw':
         text = '\n'.join(map(lambda arg: read(arg).lower(), argv[2:]))
         freqs = frequencies_words(text)

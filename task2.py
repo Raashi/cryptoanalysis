@@ -1,7 +1,7 @@
 from random import choice
 
 from utils import *
-from cyphers import Vigenere as Vig
+import cyphers.vigenere as vig
 
 
 TEST_FILENAME = 'table.txt'
@@ -47,9 +47,9 @@ def main():
         meindex = get_meindex(seq1, seq2, alph, verbose=True)
         print('Средний индекс совпадения x 100 : {:.2f}'.format(meindex))
     elif op == 'enc':
-        Vig.exec_encrypt()
+        vig.exec_encrypt()
     elif op == 'dec':
-        Vig.exec_decrypt()
+        vig.exec_decrypt()
     elif op == 'analyze':
         enc = read(argv[2])
         analyze_shifts(enc)

@@ -1,7 +1,8 @@
 import json
 
 from utils import *
-from cyphers import Permutations as Perms, text_to_words
+from cyphers import text_to_words
+import cyphers.permutation as perm
 
 SPACER = '   '
 
@@ -95,9 +96,9 @@ def brute(enc, tree):
 
     f = get_file_write("bruted.txt")
     for key in _brute(tree, k, []):
-        print(Perms.str_key(key) + '\r', end='')
-        dec = Perms.decrypt(enc, key)
-        f.write(Perms.str_key(key) + '\n')
+        print(perm.str_key(key) + '\r', end='')
+        dec = perm.decrypt(enc, key)
+        f.write(perm.str_key(key) + '\n')
         f.write(dec + '\n\n')
     f.close()
 
@@ -109,11 +110,11 @@ def main():
         write('alph.txt', alph)
         write('banned.txt', '\n'.join(banned))
     elif op == 'gen':
-        Perms.exec_gen_mono_key()
+        perm.exec_gen_mono_key()
     elif op == 'enc':
-        Perms.exec_encrypt()
+        perm.exec_encrypt()
     elif op == 'dec':
-        Perms.exec_decrypt()
+        perm.exec_decrypt()
     elif op == 'table':
         enc = read(argv[2]).lower()
         banned = read(argv[3]).split('\n')

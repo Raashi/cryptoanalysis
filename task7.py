@@ -1,7 +1,9 @@
 from itertools import product
 
 from utils import *
-from cyphers import Vigenere as Vig, get_freqs, write_freqs, read_freqs, Replacement as Rep, exec_freqs
+from cyphers import get_freqs, read_freqs, exec_freqs
+import cyphers.vigenere as vig
+import cyphers.replacement as rep
 
 
 def _get_meindex(seq1, seq2, alph):
@@ -17,14 +19,14 @@ def attack(enc, freqs, alph, length):
 
     good_deltas = []
     for idx_delta in range(1, length):
-        deltas = [Vig.decrypt(ys[idx_delta], alph, letter) for letter in alph]
+        deltas = [vig.decrypt(ys[idx_delta], alph, letter) for letter in alph]
         meindices = [_get_meindex(ys[0], delta, alph) for delta in deltas]
         max_meindex, min_meindex = max(meindices), min(meindices)
         lower_meindex = min_meindex + (max_meindex - min_meindex) * 0.75
         candidates = [idx for idx, meindex in enumerate(meindices) if meindex >= lower_meindex]
         good_deltas.append(''.join(map(lambda x: alph[x], candidates)))
 
-    k0s = Rep.attack_shift(freqs, get_freqs(ys[0], alph), alph, 3)[1:]
+    k0s = rep.attack_shift(freqs, get_freqs(ys[0], alph), alph, 3)[1:]
     keys = []
     for k0 in k0s:
         k0 = int(k0)
@@ -35,9 +37,9 @@ def attack(enc, freqs, alph, length):
 
 def main():
     if op == 'enc':
-        Vig.exec_encrypt()
+        vig.exec_encrypt()
     elif op == 'dec':
-        Vig.exec_decrypt()
+        vig.exec_decrypt()
     elif op == 'freq':
         exec_freqs()
     elif op == 'attack':
@@ -48,7 +50,7 @@ def main():
         keys = attack(enc, freqs, alph, length)
         write('keys.txt', '\n'.join(keys))
     elif op == 'brute':
-        Vig.exec_brute()
+        vig.exec_brute()
     else:
         print_wrong_op()
 
