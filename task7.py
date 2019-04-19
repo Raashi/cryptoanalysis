@@ -1,7 +1,7 @@
 from itertools import product
 
 from utils import *
-from cyphers import Vigenere as Vig, get_freqs, str_freqs, read_freqs, Replacement as Rep
+from cyphers import Vigenere as Vig, get_freqs, write_freqs, read_freqs, Replacement as Rep, exec_freqs
 
 
 def _get_meindex(seq1, seq2, alph):
@@ -24,7 +24,7 @@ def attack(enc, freqs, alph, length):
         candidates = [idx for idx, meindex in enumerate(meindices) if meindex >= lower_meindex]
         good_deltas.append(''.join(map(lambda x: alph[x], candidates)))
 
-    k0s = Rep.attack_shift(freqs, read_freqs(str_freqs(get_freqs(ys[0], alph))), alph, 3)[1:]
+    k0s = Rep.attack_shift(freqs, get_freqs(ys[0], alph), alph, 3)[1:]
     keys = []
     for k0 in k0s:
         k0 = int(k0)
@@ -34,42 +34,23 @@ def attack(enc, freqs, alph, length):
 
 
 def main():
-    op = argv[1]
-
     if op == 'enc':
-        msg = read(argv[2]).lower()
-        key = read_text(argv[3])[0]
-        alph = read(argv[4])
-        enc = Vig.encrypt(msg.lower(), alph, key)
-        write('enc.txt', enc)
+        Vig.exec_encrypt()
     elif op == 'dec':
-        enc = read(argv[2])
-        key = read(argv[3])
-        alph = read(argv[4])
-        dec = Vig.decrypt(enc, alph, key)
-        write('dec.txt', dec)
+        Vig.exec_decrypt()
     elif op == 'freq':
-        text = read(argv[2]).lower()
-        alph = read(argv[3])
-        write(argv[4], str_freqs(get_freqs(text, alph)))
+        exec_freqs()
     elif op == 'attack':
         enc = read(argv[2])
         alph = read(argv[3])
-        freqs = read_freqs(read(argv[4]))
+        freqs = read_freqs(argv[4])
         length = int(argv[5])
         keys = attack(enc, freqs, alph, length)
         write('keys.txt', '\n'.join(keys))
     elif op == 'brute':
-        enc = read(argv[2])
-        keys = read(argv[3]).split('\n')
-        alph = read(argv[4])
-        f = get_file_write('bruted.txt')
-        for key in keys:
-            f.write('КЛЮЧ : {}\n{}\n\n'.format(key, Vig.decrypt(enc, alph, key)))
-            f.write('-------------------------------\n')
-        f.close()
+        Vig.exec_brute()
     else:
-        print('ОШИБКА: неверный код операции')
+        print_wrong_op()
 
 
 if __name__ == '__main__':

@@ -1,10 +1,3 @@
-"""
-usage:
-%user%:> python kasiski.py gen 4
-%user%:> python kasiski.py enc test.txt 2,4,1,3
-%user%:> python kasiski.py dec enc.txt 2,4,1,3
-%user%:> python kasiski.py kas enc.txt
-"""
 from utils import *
 from cyphers import Permutations as Perms
 
@@ -64,32 +57,23 @@ def brute(enc, length):
 
 
 def main():
-    op = argv[1]
-
     if op == 'gen':
-        length = int(argv[2])
-        Perms.gen_monocycle_key(length)
+        Perms.exec_gen_mono_key()
     elif op == 'enc':
-        msg = read(argv[2])
-        key = Perms.read_key(read(argv[3]))
-        enc = Perms.encrypt(msg, key)
-        write('enc.txt', enc)
+        Perms.exec_encrypt()
     elif op == 'dec':
-        enc = read(argv[2])
-        key = Perms.read_key(read(argv[3]))
-        dec = Perms.decrypt(enc, key)
-        write('dec.txt', dec)
+        Perms.exec_decrypt()
     elif op == 'kas':
         enc = read(argv[2]).lower()
         print('Количество символов: {}'.format(len(enc)))
         start, end = int(argv[3]), int(argv[4])
         kasiski(enc, start, end)
     elif op == 'brute':
-        enc = read(argv[2]).lower()
+        enc = read(argv[2])
         length = int(argv[3])
         brute(enc, length)
     else:
-        print('ОШИБКА: неверная операция')
+        print_wrong_op()
 
 
 if __name__ == '__main__':

@@ -56,25 +56,15 @@ def attack(enc, alph, bi, length):
             if wk_ki_min <= wk:
                 ki_true = alph[wks_ki.index(wk_ki_min)]
                 key0 = key0[:idx_ki] + ki_true + key0[idx_ki + 1:]
-        print('{:.7f}'.format(wk), key0)
+        print('{:.7f}'.format(wk), '->', key0)
     return key
 
 
 def main():
-    op = argv[1]
-
     if op == 'enc':
-        msg = read(argv[2]).lower()
-        key = read_text(argv[3])[0]
-        alph = read(argv[4])
-        enc = Vig.encrypt(msg.lower(), alph, key)
-        write('enc.txt', enc)
+        Vig.exec_encrypt()
     elif op == 'dec':
-        enc = read(argv[2])
-        key = read(argv[3])
-        alph = read(argv[4])
-        dec = Vig.decrypt(enc, alph, key)
-        write('dec.txt', dec)
+        Vig.exec_decrypt()
     elif op == 'bi':
         text = read(argv[2]).lower()
         alph = read(argv[3])
@@ -88,34 +78,9 @@ def main():
         key = attack(enc, alph, bi, length)
         print('Вычисленный ключ:', key)
         write('keys.txt', key)
-    elif op == 'brute':
-        enc = read(argv[2])
-        keys = read(argv[3]).split('\n')
-        alph = read(argv[4])
-        f = get_file_write('bruted.txt')
-        for key in keys:
-            f.write('КЛЮЧ : {}\n{}\n\n'.format(key, Vig.decrypt(enc, alph, key)))
-            f.write('-------------------------------\n')
-        f.close()
     else:
-        print('ОШИБКА: неверный код операции')
+        print_wrong_op()
 
 
 if __name__ == '__main__':
     main()
-
-# key0 = ''
-# for idx_ki in range(length):
-#     wks_ki = []
-#     for letter in alph:
-#         key_ki = key[:idx_ki] + letter + key[idx_ki + 1:]
-#         dec_ki = Vig.decrypt(enc, alph, key_ki)
-#         wk_ki = get_w(get_freqs_bigrams(dec_ki, alph), bi)
-#         wks_ki.append(wk_ki)
-#     wk_ki_min = min(wks_ki)
-#     if wk_ki_min <= wk:
-#         ki_true = alph[wks_ki.index(wk_ki_min)]
-#         key0 += ki_true
-#     else:
-#         key0 += key[idx_ki]
-# print(key0)

@@ -1,7 +1,8 @@
+from sys import argv
 from random import choice, shuffle
-from itertools import permutations, product
+from itertools import permutations
 
-from utils import alph_rus, write
+from utils import write, read, get_file_write
 
 
 def text_to_words(text):
@@ -20,26 +21,34 @@ def text_to_words(text):
 
 def get_freqs(text, alph):
     freqs = {letter: 0 for letter in alph}
-    alphas = 0
-    for c in text:
-        if c in alph:
-            freqs[c] += 1
-            alphas += 1
+    chars_count = 0
+    for char in text:
+        if char in alph:
+            freqs[char] += 1
+            chars_count += 1
 
-    for alpha, count in freqs.items():
-        freqs[alpha] = count / alphas
+    for char, count in freqs.items():
+        freqs[char] = count / chars_count
+
     freqs = list(sorted(freqs.items(), key=lambda pair: pair[1], reverse=True))
-    return freqs  # [('e', 0.0115712392), ..., (..)]
+    return [(char, '{:.5f}'.format(count)) for char, count in freqs]
 
 
-def read_freqs(data):
-    freqs = map(lambda pair: pair.split(':'), data.split('\n'))
-    return [(k[0], v) for k, v in freqs]  # [('e', '0.01156'), ..., (..)]
+def read_freqs(filename):
+    freqs = map(lambda pair: pair.split(':'), read(filename).split('\n'))
+    return [(k[0], v) for k, v in freqs]
 
 
-def str_freqs(freqs):
-    res = map(lambda pair: '{} : {:.5f}'.format(*pair), freqs)
-    return '\n'.join(res)  # e : 0.0116
+def write_freqs(filename, freqs):
+    res = map(lambda pair: '{} : {}'.format(*pair), freqs)
+    write(filename, '\n'.join(res))
+
+
+def exec_freqs():
+    text = read(argv[2]).lower()
+    alph = read(argv[3])
+    freqs = get_freqs(text, alph)
+    write_freqs(argv[4], freqs)
 
 
 class Permutations:
@@ -72,20 +81,21 @@ class Permutations:
             free.remove(idx_next)
             key[idx] = idx_next
             idx = idx_next
-        # noinspection PyTypeChecker
         key[idx] = start
 
         if not Permutations.is_monocycle_key(key):
             exit(1)
         print('Сгенерирован ключ длины {}:'.format(length), Permutations.str_key(key))
-        write('key.txt', Permutations.str_key(key))
         return key
 
     @staticmethod
     def encrypt(msg, key):
         length = len(key)
+
+        alph_from_msg = list({char for char in msg if char.isalpha()})
+        alph_from_msg = alph_from_msg if len(alph_from_msg) else list({char for char in msg})
         while len(msg) % length:
-            msg += choice(alph_rus)
+            msg += choice(alph_from_msg)
 
         enc = ''
         for b in range(len(msg) // length):
@@ -102,6 +112,26 @@ class Permutations:
             block = enc[b * length: (b + 1) * length]
             dec += ''.join(block[el] for el in key)
         return dec
+
+    @staticmethod
+    def exec_gen_mono_key():
+        length = int(argv[2])
+        key = Permutations.gen_monocycle_key(length)
+        write('key.txt', Permutations.str_key(key))
+
+    @staticmethod
+    def exec_encrypt():
+        msg = read(argv[2])
+        key = Permutations.read_key(read(argv[3]))
+        enc = Permutations.encrypt(msg, key)
+        write('enc.txt', enc)
+
+    @staticmethod
+    def exec_decrypt():
+        enc = read(argv[2])
+        key = Permutations.read_key(read(argv[3]))
+        dec = Permutations.decrypt(enc, key)
+        write('dec.txt', dec)
 
 
 class Vigenere:
@@ -133,6 +163,33 @@ class Vigenere:
             dec += Vigenere.decrypt_char(alph, idx, char, key)
         return dec
 
+    @staticmethod
+    def exec_encrypt():
+        msg = read(argv[2]).lower()
+        key = read(argv[3])
+        alph = read(argv[4])
+        enc = Vigenere.encrypt(msg, alph, key)
+        write('enc.txt', enc)
+
+    @staticmethod
+    def exec_decrypt():
+        enc = read(argv[2])
+        alph = read(argv[3])
+        key = read(argv[4])
+        dec = Vigenere.decrypt(enc, alph, key)
+        write('dec.txt', dec)
+
+    @staticmethod
+    def exec_brute():
+        enc = read(argv[2])
+        keys = read(argv[3]).split('\n')
+        alph = read(argv[4])
+        f = get_file_write('bruted.txt')
+        for key in keys:
+            f.write('КЛЮЧ : {}\n{}\n\n'.format(key, Vigenere.decrypt(enc, alph, key)))
+            f.write('-------------------------------\n')
+        f.close()
+
 
 class Replacement:
     PRECISION = 3
@@ -163,14 +220,18 @@ class Replacement:
         return ''.join(map(lambda c: alph[key.index(c)] if c in alph else c, enc))
 
     @staticmethod
-    def attack_shift(freq_true, freq_enc, alph, prec):
-        keys = Replacement.images(freq_true, freq_enc, prec)
+    def attack_shift(freq_true, freq_enc, alph, precision):
+        keys = Replacement.images(freq_true, freq_enc, precision)
         shifts = {}
         for key in keys:
             key = ''.join(sorted(key, key=lambda x: alph.index(freq_true[key.index(x)][0])))
             for idx, letter in enumerate(key):
                 shift = (alph.index(letter) - idx) % len(alph)
                 shifts[shift] = shifts.get(shift, 0) + 1
+        # берем только самые большие по количеству смещения
+        min_count, max_count = min(shifts.values()), max(shifts.values())
+        border_value = min_count + (max_count - min_count) * 0.5
+        shifts = {shift: count for shift, count in shifts.items() if count > border_value}
         shifts = list(sorted(shifts.keys(), key=lambda x: shifts[x], reverse=True))
         return [alph] + list(map(str, shifts[:3]))
 
@@ -186,11 +247,11 @@ class Replacement:
                 cont.pop()
 
     @staticmethod
-    def images(freq_true, freq_enc, prec):
+    def images(freq_true, freq_enc, precision):
         freq_true = ''.join(map(lambda pair: pair[0], freq_true))
 
         for idx, (letter, freq) in enumerate(freq_enc):
-            freq_new = freq[:2] + freq[2:2 + prec + 1]
+            freq_new = freq[:2] + freq[2:2 + precision + 1]
             freq_enc[idx] = (letter, freq_new)
 
         groups = []
@@ -208,3 +269,17 @@ class Replacement:
             if len(res) > 1000:
                 break
         return res
+
+    @staticmethod
+    def exec_encrypt():
+        msg = read(argv[2]).lower()
+        alph, key = read(argv[3]).split('\n')
+        enc = Replacement.encrypt(msg, key, alph)
+        write('enc.txt', enc)
+
+    @staticmethod
+    def exec_decrypt():
+        enc = read(argv[2]).lower()
+        alph, key = read(argv[3]).split('\n')
+        dec = Replacement.decrypt(enc, key, alph)
+        write('dec.txt', dec)

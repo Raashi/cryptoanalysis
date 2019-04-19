@@ -103,35 +103,23 @@ def brute(enc, tree):
 
 
 def main():
-    op = argv[1]
-
-    if op == 'bigram':
+    if op == 'bi':
         text = read(argv[2]).lower()
         alph, banned = get_banned_bigrams(text)
         write('alph.txt', alph)
         write('banned.txt', '\n'.join(banned))
     elif op == 'gen':
-        length = int(argv[2])
-        key = Perms.gen_monocycle_key(length)
-        write('key.txt', Perms.str_key(key))
+        Perms.exec_gen_mono_key()
     elif op == 'enc':
-        msg = read(argv[2])
-        key = Perms.read_key(read(argv[3]))
-        while len(msg) % len(key):
-            msg += ' '
-        enc = Perms.encrypt(msg, key)
-        write('enc.txt', enc)
+        Perms.exec_encrypt()
     elif op == 'dec':
-        enc = read(argv[2])
-        key = Perms.read_key(read(argv[3]))
-        dec = Perms.decrypt(enc, key)
-        write('dec.txt', dec)
+        Perms.exec_decrypt()
     elif op == 'table':
         enc = read(argv[2]).lower()
         banned = read(argv[3]).split('\n')
         length = int(argv[4])
         table = get_table(enc, banned, length)
-        write('table.txt', '\n'.join(map(lambda x: ' '.join(map(lambda x: str(int(x)), x)), table)))
+        write('table.txt', '\n'.join(map(lambda x: ' '.join(map(lambda el: str(int(el)), x)), table)))
     elif op == 'tree':
         table = read(argv[2]).split('\n')
         for idx, row in enumerate(table):
@@ -143,7 +131,7 @@ def main():
         tree = json.loads(read(argv[3]))
         brute(enc, tree)
     else:
-        print('ОШИБКА: неверная операция')
+        print_wrong_op()
 
 
 if __name__ == '__main__':

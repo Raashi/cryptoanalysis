@@ -1,12 +1,10 @@
 from random import randint
 
 from utils import *
-from cyphers import Replacement as Rep, get_freqs, read_freqs, str_freqs
+from cyphers import Replacement as Rep, read_freqs, exec_freqs
 
 
 def main():
-    op = argv[1]
-
     if op == 'genp':
         alph = read(argv[2])
         write('key.txt', alph + '\n' + Rep.gen(alph))
@@ -14,34 +12,25 @@ def main():
         alph = read(argv[2])
         write('key.txt', alph + '\n' + str(randint(1, len(alph) - 1)))
     elif op == 'enc':
-        msg = read(argv[2]).lower()
-        alph, key = read(argv[3]).split('\n')
-        enc = Rep.encrypt(msg, key, alph)
-        write('enc.txt', enc)
+        Rep.exec_encrypt()
     elif op == 'dec':
-        enc = read(argv[2]).lower()
-        alph, key = read(argv[3]).split('\n')
-        dec = Rep.decrypt(enc, key, alph)
-        write('dec.txt', dec)
+        Rep.exec_decrypt()
     elif op == 'freq':
-        text = read(argv[2]).lower()
-        alph = read(argv[3])
-        freqs = get_freqs(text, alph)
-        write(argv[4], str_freqs(freqs))
+        exec_freqs()
     elif op == 'a-perm':
-        freq_true = read_freqs(read(argv[2]))
-        freq_enc = read_freqs(read(argv[3]))
+        freq_true = read_freqs(argv[2])
+        freq_enc = read_freqs(argv[3])
         precision = int(argv[4]) if len(argv) > 4 else 3
 
-        res = Rep.images(freq_true, freq_enc, precision)
-        write('keys.txt', '\n'.join(res))
+        keys = Rep.images(freq_true, freq_enc, precision)
+        write('keys.txt', '\n'.join(keys))
     elif op == 'a-sh':
-        freq_true = read_freqs(read(argv[2]))
-        freq_enc = read_freqs(read(argv[3]))
+        freq_true = read_freqs(argv[2])
+        freq_enc = read_freqs(argv[3])
         alph = read(argv[4])
-        prec = int(argv[5]) if len(argv) > 5 else 5
+        precision = int(argv[5]) if len(argv) > 5 else 5
 
-        keys = Rep.attack_shift(freq_true, freq_enc, alph, prec)
+        keys = Rep.attack_shift(freq_true, freq_enc, alph, precision)
         write('keys.txt', '\n'.join(keys))
     elif op == 'brute':
         enc = read(argv[2])
@@ -53,7 +42,7 @@ def main():
             f.write('-------------------------------\n')
         f.close()
     else:
-        print('ОШИБКА: неверный код операции')
+        print_wrong_op()
 
 
 if __name__ == '__main__':

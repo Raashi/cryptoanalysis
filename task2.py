@@ -1,20 +1,5 @@
-"""
-usage:
-%user%:> python friedman.py gen rus/alph.txt 100 seq1.txt
-%user%:> python friedman.py gen eng/alph.txt 100 seq2.txt
-
-%user%:> python friedman.py eindex seq1.txt seq2.txt
-%user%:> python friedman.py meindex seq1.txt seq2.txt
-
-%user%:> python friedman.py enc rus/t1.txt rus/alph.txt key.txt
-%user%:> python friedman.py dec enc.txt rus/alph.txt key.txt
-
-%user%:> python friedman.py analyze enc.txt
-"""
 from random import choice
-from functools import reduce
 
-from samples.sample import get_random_seq, get_random_piece
 from utils import *
 from cyphers import Vigenere as Vig
 
@@ -22,128 +7,54 @@ from cyphers import Vigenere as Vig
 TEST_FILENAME = 'table.txt'
 
 
-def gen_samples(length):
-    ftest = open(join(DIR_MODULE, TEST_FILENAME), 'w', encoding='utf-8')
-    # случайная - русский
-    for _ in range(2):
-        ftest.write(get_random_seq(alph_rus, length) + '\n')
-        ftest.write(get_random_seq(alph_rus, length) + '\n')
-    # случайная - английский
-    for _ in range(2):
-        ftest.write(get_random_seq(alph_eng, length) + '\n')
-        ftest.write(get_random_seq(alph_eng, length) + '\n')
-    ftest.write('\n')
-
-    # русский
-    for _ in range(4):
-        ftest.write(get_random_piece('rus', length) + '\n')
-        ftest.write(get_random_piece('rus', length) + '\n')
-    ftest.write('\n')
-
-    # английский
-    for _ in range(4):
-        ftest.write(get_random_piece('eng', length) + '\n')
-        ftest.write(get_random_piece('eng', length) + '\n')
-    ftest.close()
-
-
-def read_samples(fn):
-    lines = read(fn).split('\n')
-    samples = list(filter(lambda row: len(row.strip()), lines))
-    return {
-        'rand': [samples[0:2], samples[2:4], samples[4:6], samples[6:8]],
-        'rus': [samples[8:10], samples[10:12], samples[12:14], samples[14:16]],
-        'eng': [samples[16:18], samples[18:20], samples[20:22], samples[22:24]]
-    }
-
-
-def write_answers(results, titles_column, titles_row):
-    precision = 3
-    space = 4
-    align_head = max(map(lambda title: len(title), titles_row)) + space
-    align = max(map(lambda title: len(title), titles_column)) + space
-    print('{:<{align_head}} {:<{align}} {:<{align}} {:<{align}}'
-          .format(titles_row[0], *titles_column, align=align, align_head=align_head))
-    for idx in range(len(titles_row) - 1):
-        print('{:<{align_head}} {:<{align}} {:<{align}} {:<{align}}'
-              .format(titles_row[idx + 1], round(results[0][idx], precision),
-                      round(results[1][idx], precision),
-                      round(results[2][idx], precision),
-                      align=align, align_head=align_head))
-
-
-def gen_seq(fn_alph, length):
-    alph = read(fn_alph)
-    return ''.join(choice(alph) for _ in range(length))
-
-
-def _get_eindex(seq1, seq2):
+def get_eindex(seq1, seq2, verbose=False):
     length = min(len(seq1), len(seq2))
     seq1, seq2 = seq1[:length], seq2[:length]
-    res = 0
-    for (symb1, symb2) in zip(seq1, seq2):
-        res += int(symb1 == symb2)
-    return res / length * 100
+    if verbose:
+        print('Количество анализируемых символов: {}'.format(min(len(seq1), len(seq2))))
+    eindex = sum(map(lambda x, y: int(x == y), seq1, seq2)) / length
+    return eindex * 100
 
 
-def get_eindex(fn1, fn2):
-    text1 = read_text(fn1)[0].strip().lower()
-    text2 = read_text(fn2)[0].strip().lower()
-    print('Количество символов: {}'.format(min(len(text1), len(text2))))
-    eindex = _get_eindex(text1, text2)
-    print('Индекс вопадения x 100 : {:.2f}'.format(eindex))
-
-
-def _get_meindex(seq1, seq2, alph):
+def get_meindex(seq1, seq2, alph, verbose=False):
     seq1 = ''.join(filter(lambda x: x in alph, seq1))
     seq2 = ''.join(filter(lambda x: x in alph, seq2))
-    meindex = sum(seq1.count(letter) * seq2.count(letter) for letter in alph) / len(seq1) / len(seq2)
+    if verbose:
+        print('Количество анализируемых символов: {}'.format(min(len(seq1), len(seq2))))
+    meindex = sum(seq1.count(char) * seq2.count(char) for char in alph) / len(seq1) / len(seq2)
     return meindex * 100
 
 
-def get_meindex(fn1, fn2, fn_alph):
-    text1 = read(fn1).lower()
-    text2 = read(fn2).lower()
-    print('Количество символов: {}'.format(min(len(text1), len(text2))))
-    alph = read(fn_alph)
-    res = _get_meindex(text1, text2, alph)
-    print('Средний индекс совпадения x 100 : {:.2f}'.format(res))
-
-
-def analyze(fn):
-    msg = read(fn).lower()
+def analyze_shifts(enc):
     for shift in range(1, 16):
-        msg_shifted = msg[shift:]
-        eindex = _get_eindex(msg, msg_shifted)
+        msg_shifted = enc[shift:]
+        eindex = get_eindex(enc, msg_shifted)
         print('l = {:>2} | индекс = {:.2f}'.format(shift, eindex))
 
 
 def main():
-    op = argv[1]
-
     if op == 'gen':
-        seq = gen_seq(argv[2], int(argv[3]))
+        alph, length = read(argv[2]), int(argv[3])
+        seq = ''.join(choice(alph) for _ in range(length))
         write(argv[4], seq)
     elif op == 'eindex':
-        get_eindex(argv[2], argv[3])
+        seq1, seq2 = read(argv[2]), read(argv[3])
+        eindex = get_eindex(seq1, seq2, verbose=True)
+        print('Индекс вопадения x 100 : {:.2f}'.format(eindex))
     elif op == 'meindex':
-        get_meindex(argv[2], argv[3], argv[4])
-    elif op == 'enc':
+        seq1, seq2 = read(argv[2]), read(argv[3])
         alph = read(argv[4])
-        msg = read(argv[2]).lower()
-        key = read_text(argv[3])[0]
-        enc = Vig.encrypt(msg.lower(), alph, key)
-        write('enc.txt', enc)
+        meindex = get_meindex(seq1, seq2, alph, verbose=True)
+        print('Средний индекс совпадения x 100 : {:.2f}'.format(meindex))
+    elif op == 'enc':
+        Vig.exec_encrypt()
     elif op == 'dec':
-        enc = read(argv[2])
-        alph = read(argv[3])
-        key = read(argv[4])
-        dec = Vig.decrypt(enc, alph, key)
-        write('dec.txt', dec)
+        Vig.exec_decrypt()
     elif op == 'analyze':
-        analyze(argv[2])
+        enc = read(argv[2])
+        analyze_shifts(enc)
     else:
-        print('ОШИБКА: неверный код операции')
+        print_wrong_op()
 
 
 if __name__ == '__main__':

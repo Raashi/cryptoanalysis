@@ -6,6 +6,7 @@ from math import gcd as _gcd
 
 
 if __name__ != '__main__':
+    op = argv[1]
     DIR_MODULE = '_' + basename(argv[0])[:-3]
 
     if not exists(DIR_MODULE):
@@ -13,8 +14,11 @@ if __name__ != '__main__':
 else:
     DIR_MODULE = ''
 
-alph_rus = 'абвгдежзийклмнопрстуфхцчшщъыьэюя'
-alph_eng = 'abcdefghijklmnopqrstuvwxyz'
+WRONG_OP = 'ОШИБКА: неверный код операции'
+
+
+def print_wrong_op():
+    print(WRONG_OP)
 
 
 def _resolve_path(fn):
