@@ -1,16 +1,3 @@
-bruted.txt
-_friedman/seq*.txt
-enc.txt
-dec.txt
-table.txt
-_perms/alph.txt
-_perms/test.txt
-_perms/tree.txt
-_perms/banned.txt
-
-_task4/freq*
-_task5/freq*
-
 # macOS files
 .DS_Store
 
