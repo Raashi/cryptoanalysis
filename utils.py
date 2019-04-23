@@ -63,6 +63,14 @@ def write_text(fn, content, next_lines, *args):
     write(fn, content, *args)
 
 
+def read_ints_list(fn):
+    return list(map(int, read(fn).split('\n')))
+
+
+def write_ints_list(fn, ints):
+    write(fn, '\n'.join(map(str, ints)))
+
+
 #    MATHEMATICS
 
 
