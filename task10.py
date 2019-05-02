@@ -2,12 +2,15 @@ from math import gcd
 
 from sys import argv
 
+from prime import factorize
+
 
 def f(x, n):
     return (pow(x, 2, n) + 1) % n
 
 
 def p_pollard(n, c):
+    c = c % n
     a = b = c
     values = {c}
     a = f(a, n)
@@ -36,11 +39,9 @@ def main():
         n = int(argv[1])
         c = int(argv[2]) % n
     assert 1 < c < n, 'c должно быть 1 < c < n'
-    p = p_pollard(n, c)
-    if p == -1:
-        print('Делитель не найден')
-    else:
-        print('Найден делитель p =', p)
+
+    factors = factorize(n, p_pollard, c)
+    print('\n'.join(map(str, factors.items())))
 
 
 if __name__ == '__main__':

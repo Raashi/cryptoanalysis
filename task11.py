@@ -2,6 +2,8 @@ from sys import argv
 from random import randint
 from math import gcd, log
 
+from prime import factorize
+
 DEFAULT_S = 10
 
 
@@ -24,11 +26,9 @@ def main():
     with open(argv[2]) as f:
         primes = list(map(int, f.read().split('\n')))
     s = DEFAULT_S if len(argv) < 4 else int(argv[3])
-    p = p1_pollard(n, primes, s)
-    if p == -1:
-        print('Делитель не найден')
-    else:
-        print('Найден делитель p =', p)
+
+    factors = factorize(n, p1_pollard, primes, s)
+    print('\n'.join(map(str, factors.items())))
 
 
 if __name__ == '__main__':

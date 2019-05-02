@@ -99,6 +99,20 @@ def gen_prime(size):
     return gen_small_prime(size) if size < 150 else gen_big_prime(size)
 
 
+def factorize(n, func, *args):
+    divisors = {}
+    p = func(n, *args)
+    while not isprime(n) and p != -1:
+        # noinspection PyUnresolvedReferences
+        divisors[p] = divisors.get(p, 0) + 1
+        n //= p
+        p = func(n, *args)
+    if n > 1:
+        divisors[n] = divisors.get(n, 0) + 1
+    return divisors
+
+
+
 if __name__ == '__main__':
     from sys import argv
     _size = int(argv[1])
