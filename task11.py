@@ -23,9 +23,9 @@ def p1_pollard(n, primes, s):
 
 def main():
     n = int(argv[1])
-    with open(argv[2]) as f:
+    with open('p.txt') as f:
         primes = list(map(int, f.read().split('\n')))
-    s = DEFAULT_S if len(argv) < 4 else int(argv[3])
+    s = DEFAULT_S if len(argv) < 3 else int(argv[2])
 
     factors = factorize(n, p1_pollard, primes, s)
     print('\n'.join(map(str, factors.items())))
