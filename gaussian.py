@@ -1,67 +1,38 @@
 import copy
-from itertools import chain, combinations
 
 
-def zero_row(row):
-    return all(el == 0 for el in row)
+def swap(mat, idx_1, idx_2, indices, ops):
+    mat[idx_1], mat[idx_2] = mat[idx_2], mat[idx_1]
+    indices[idx_1], indices[idx_2] = indices[idx_2], indices[idx_1]
+    ops[idx_1], ops[idx_2] = ops[idx_2], ops[idx_1]
 
 
-def sum_rows(*rows):
-    # результат будет в первом аргументе (для удобства он будет возвращен)
-    for row in rows[1:]:
-        for idx in range(len(row)):
-            rows[0][idx] = (rows[0][idx] + row[idx]) % 2
-    return rows[0]
+def _gaussian(mat):
+    indices = [idx for idx in range(len(mat))]
+    ops = [[idx] for idx in range(len(mat))]
 
-
-def all_subsets(elements, *args):
-    rng = range(*args) if len(args) else range(0, len(elements) + 1)
-    return chain(*map(lambda x: combinations(elements, x), rng))
-
-
-def gen_gaussian_rec(es, col_num, row_num, stack, zeros):
-    # 1. поксорить
-    indices = set(range(len(es))) - stack
-
-    row_set = []
-    for row_idx in indices:
-        if es[row_idx][col_num] == 1 and all(el == 0 for el in es[row_idx][:col_num]):
-            row_set.append(row_idx)
-
-    for row_subset in all_subsets(row_set, 1, len(row_set) + 1, 2):
-        sum_rows(es[row_num], *[es[r] for r in row_subset])
-        stack = stack.union(row_subset)
-
-        # 2. выдать ответы если есть
-        if all(el == 0 for el in es[row_num]):
-            for zero_subset in all_subsets(zeros):
-                yield tuple(stack) + zero_subset
-
-        if any(el == 1 for el in es[row_num]):
-            col_num_rec = col_num
-            while es[row_num][col_num_rec] == 0:
-                col_num_rec += 1
-
-            yield from gen_gaussian_rec(es, col_num_rec, row_num, stack, zeros)
-
-        sum_rows(es[row_num], *[es[r] for r in row_subset])
-        stack = stack.difference(row_subset)
-
-
-def gen_gaussian(es_r):
-    es = copy.deepcopy(es_r)
-    numbers = set()
-    zeros = list(filter(lambda rr: zero_row(es[rr]), range(len(es))))
-    # композиции нулевых строк
-    for subset in all_subsets(zeros, 1, len(zeros) + 1):
-        yield subset
-    # комбинации нулевых и ненулевых решений
-    for idx, row in enumerate(es):
-        if idx in zeros:
+    for i in range(len(mat[0])):
+        for i_find in range(i, len(mat)):
+            if mat[i_find][i] == 1:
+                swap(mat, i, i_find, indices, ops)
+                break
+        if mat[i][i] == 0:
             continue
-        idx_1 = 0
-        while row[idx_1] == 0:
-            idx_1 += 1
-        numbers.add(idx)
-        yield from gen_gaussian_rec(es, idx_1, idx, numbers, zeros)
-        numbers.remove(idx)
+        for i_xor in range(i + 1, len(mat)):
+            if mat[i_xor][i] == 1:
+                mat[i_xor] = list(map(lambda a, b: a ^ b, mat[i_xor], mat[i]))
+                ops[i_xor].extend(ops[i])
+                if all(map(lambda el: el == 0, mat[i_xor])):
+                    return ops[i_xor]
+
+
+def gaussian(mat):
+    sol = _gaussian(copy.deepcopy(mat))
+    if sol is None:
+        return None
+    buffer = [0] * len(mat[0])
+    for row_idx in sol:
+        for j in range(len(mat[0])):
+            buffer[j] ^= mat[row_idx][j]
+    assert all(map(lambda el: el == 0, buffer))
+    return sol

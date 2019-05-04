@@ -5,8 +5,8 @@ from functools import reduce
 from operator import add
 
 from mutils import legendre, gen_convergent, gen_square_chain_fraction, \
-    euclid
-from gaussian import gen_gaussian
+    euclid, is_prime
+from gaussian import gaussian
 
 
 MAX_ITERATIONS_DIXON = 100
@@ -24,7 +24,9 @@ def is_b_smooth(p, base):
 
 
 def check_bi(n, base, ps, alphas, es):
-    ks = next(gen_gaussian(es))
+    ks = gaussian(es)
+    if ks is None:
+        return -1
     s = 1
     for k in ks:
         s = (s * ps[k]) % n
@@ -136,9 +138,16 @@ def dixon_base(n, primes, check_legendre=False):
 
 def main():
     n = int(argv[1])
+
+    if is_prime(n, 25):
+        print('{} - простое'.format(n))
+        return
+
     with open('p.txt') as f:
         primes_data = f.read()
     primes = list(map(int, primes_data.split('\n')))
+
+    print('Размер базы = {}'.format(len(dixon_base(n, primes))))
 
     p = dixon_usual(n, primes)
     print('Стандартный алгоритм:\n{}'.format(p))
