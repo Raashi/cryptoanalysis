@@ -156,14 +156,12 @@ def main():
     if '-u' in argv:
         p = dixon_usual(n, primes)
         print('Стандартный алгоритм:\n{}'.format(p))
-    elif '-m' in argv:
+    if '-m' in argv:
         p = dixon_modified(n, primes)
         print('С добавлением -1 и выбором наименьшего а:\n{}'.format(p))
-    elif '-c' in argv:
+    if '-c' in argv:
         p = dixon_chain(n, primes)
         print('С использованием цепных дробей:\n{}'.format(p))
-    else:
-        print('Неизвестный алгоритм')
 
 
 if __name__ == '__main__':

@@ -7,12 +7,19 @@ from utils import *
 from prime import gen_prime
 
 
-def square_root(n):
-    x1 = n
-    x2 = int((x1 + (n / x1)) / 2)
-    while x2 < x1:
-        x1, x2 = x2, int((x2 + (n / x2)) / 2)
-    return x1
+def isqrt(x):
+    if x < 0:
+        raise ValueError('square root not defined for negative numbers')
+    n = int(x)
+    if n == 0:
+        return 0
+    a, b = divmod(n.bit_length(), 2)
+    x = 2**(a+b)
+    while True:
+        y = (x + n//x)//2
+        if y >= x:
+            return x
+        x = y
 
 
 def gen_params(bit_count):
@@ -35,7 +42,7 @@ def gen_params(bit_count):
 
 def attack_by_phi(n, phi):
     discr = (n - phi + 1) ** 2 - (4 * n)
-    sqrt_discr = round(sqrt(discr))
+    sqrt_discr = isqrt(discr)
     assert discr == sqrt_discr ** 2
 
     p = (n - phi + 1 + sqrt_discr) // 2
