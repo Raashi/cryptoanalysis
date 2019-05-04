@@ -7,7 +7,7 @@ from math import gcd
 
 SMALL_PRIMES = [2, 3, 5, 7, 11, 13, 17, 19, 23, 29]  # длина - 33 бита
 SMALL_PRIMES_PRODUCT = functools.reduce(operator.mul, SMALL_PRIMES)
-MR_TESTS = 5
+MR_TESTS = 25
 
 
 def check_len(q, desired_size):

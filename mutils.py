@@ -10,6 +10,22 @@ def euclid(a, b):
     return b
 
 
+def eeuclid(a, b):
+    r0, r1 = a, b
+    x0, x1 = 1, 0
+    y0, y1 = 0, 1
+
+    q, r2 = r0 // r1, r0 % r1
+    while r2 != 0:
+        x1, x0 = x0 - q * x1, x1
+        y1, y0 = y0 - q * y1, y1
+
+        r1, r0 = r2, r1
+        q, r2 = r0 // r1, r0 % r1
+
+    return r1, x1, y1
+
+
 def legendre(a, n):
     a %= n
     if a == 0:
@@ -103,8 +119,18 @@ def gen_convergent(generator):
         p0, p1, q0, q1 = p1, pi, q1, qi
 
 
-def gaussian(mat):
-    pass
+def get_inverse(a, m):
+    if a == 0:
+        return 0
+    if euclid(a, m) != 1:
+        raise ValueError('Не существует обратного элемента для a={} по модулю m={}'.format(a, m))
+    d, x, y = eeuclid(a, m)
+    assert d == 1
+    return x % m
+
+
+def ratio(p, q, m):
+    return (p * get_inverse(q, m)) % m
 
 
 if __name__ == '__main__':
