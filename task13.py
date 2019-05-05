@@ -31,11 +31,11 @@ def check_bi(n, base, ps, alphas, es):
             s = (s * ps[k]) % n
         t = 1
         for b_idx, b in enumerate(base):
-            t = (t * pow(b, reduce(add, (alphas[k][b_idx] for k in ks)) // 2, n)) % n
+            t = (t * pow(b, reduce(add, (alphas[k][b_idx] for k in ks)) // 2, n))
         assert pow(s, 2, n) == pow(t, 2, n)
 
-        if s != t and s != n - t:
-            p = euclid((s - t) % n, n)
+        if s != t % n and s != (-t) % n:
+            p = euclid(s + t, n)
             return p
     return -1
 
@@ -103,6 +103,8 @@ def dixon_usual(n, base):
 
         while len(ps) < h + 1:
             b = randint(isqrt(n), n)
+            if b in ps:
+                continue
             a = pow(b, 2, n)
             smooth, alpha, e = is_b_smooth(a, base)
             if smooth:
@@ -128,7 +130,7 @@ def dixon_base(n, primes, check_legendre=False):
     while idx < len(primes):
         prime = primes[idx]
         idx += 1
-        if prime > base_max:
+        if prime > base_max and len(base) > 2:
             break
         if check_legendre and legendre(n, prime) != 1:
             continue
@@ -139,15 +141,35 @@ def dixon_base(n, primes, check_legendre=False):
 def dixon(n, primes, func):
     check_legendre = func == dixon_chain
     base = ([] if func == dixon_usual else [-1]) + dixon_base(n, primes, check_legendre=check_legendre)
-    start_len = len(base) // 2
+    start_len = max(1, len(base) - 10)
 
     p = func(n, base)
-    while (p == 1 or p == -1 or p == n) and len(base) > start_len:
-        if p == 1 or p == -1:
-            base = base[:-1]
-        else:
-            print('необходимо увеличить базу')
+    while (p == 1 or p == -1) and len(base) > start_len:
+        # print(base)
+        base = base[:-1]
+        p = func(n, base)
+    if p != 1 and p != -1:
+        return p
 
+    base = ([] if func == dixon_usual else [-1]) + dixon_base(n, primes, check_legendre=check_legendre)
+    idx_prime_last = 0
+    while base[-1] != primes[idx_prime_last]:
+        idx_prime_last += 1
+    idx_prime_last += 1
+    start_len = len(base) + 5
+    p = func(n, base)
+    while (p == 1 or p == -1) and len(base) <= start_len:
+        # print(base)
+        if not check_legendre:
+            base.append(primes[idx_prime_last])
+            idx_prime_last += 1
+        else:
+            while idx_prime_last < len(primes):
+                prime = primes[idx_prime_last]
+                idx_prime_last += 1
+                if legendre(n, prime) == 1:
+                    base.append(prime)
+                    break
         p = func(n, base)
     return p
 
