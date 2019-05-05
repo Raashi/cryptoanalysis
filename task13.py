@@ -5,7 +5,7 @@ from functools import reduce
 from operator import add
 
 from mutils import legendre, gen_convergent, gen_square_chain_fraction, \
-    euclid, is_prime
+    euclid, is_prime, isqrt
 from gaussian import gaussian
 
 
@@ -25,24 +25,22 @@ def is_b_smooth(p, base):
 
 
 def check_bi(n, base, ps, alphas, es):
-    for idx, ks in enumerate(gaussian(es)):
+    for ks in gaussian(es):
         s = 1
         for k in ks:
             s = (s * ps[k]) % n
         t = 1
         for b_idx, b in enumerate(base):
             t = (t * pow(b, reduce(add, (alphas[k][b_idx] for k in ks)) // 2, n)) % n
+        assert pow(s, 2, n) == pow(t, 2, n)
 
         if s != t and s != n - t:
             p = euclid((s - t) % n, n)
             return p
-        if idx > SOLUTIONS_TO_CHECK:
-            break
     return -1
 
 
-def dixon_chain(n, primes):
-    base = [-1] + dixon_base(n, primes, check_legendre=True)
+def dixon_chain(n, base):
     h = len(base)
 
     ps, alphas, es = [], [], []
@@ -68,15 +66,14 @@ def dixon_chain(n, primes):
     return -1
 
 
-def dixon_modified(n, primes):
-    base = [-1] + dixon_base(n, primes)
+def dixon_modified(n, base):
     h = len(base)
 
     idx = 0
     while True:
         ps, alphas, es = [], [], []
         while len(ps) < h + 1:
-            b = randint(int(sqrt(n)), n)
+            b = randint(isqrt(n), n)
             a = pow(b, 2, n)
             if a > n - a:
                 a = -(n - a)
@@ -97,8 +94,7 @@ def dixon_modified(n, primes):
                 return -1
 
 
-def dixon_usual(n, primes):
-    base = dixon_base(n, primes)
+def dixon_usual(n, base):
     h = len(base)
 
     idx = 0
@@ -106,7 +102,7 @@ def dixon_usual(n, primes):
         ps, alphas, es = [], [], []
 
         while len(ps) < h + 1:
-            b = randint(int(sqrt(n)), n)
+            b = randint(isqrt(n), n)
             a = pow(b, 2, n)
             smooth, alpha, e = is_b_smooth(a, base)
             if smooth:
@@ -140,6 +136,22 @@ def dixon_base(n, primes, check_legendre=False):
     return base
 
 
+def dixon(n, primes, func):
+    check_legendre = func == dixon_chain
+    base = ([] if func == dixon_usual else [-1]) + dixon_base(n, primes, check_legendre=check_legendre)
+    start_len = len(base) // 2
+
+    p = func(n, base)
+    while (p == 1 or p == -1 or p == n) and len(base) > start_len:
+        if p == 1 or p == -1:
+            base = base[:-1]
+        else:
+            print('необходимо увеличить базу')
+
+        p = func(n, base)
+    return p
+
+
 def main():
     n = int(argv[1])
 
@@ -151,16 +163,17 @@ def main():
         primes_data = f.read()
     primes = list(map(int, primes_data.split('\n')))
 
-    print('Размер базы = {}'.format(len(dixon_base(n, primes))))
-
     if '-u' in argv:
-        p = dixon_usual(n, primes)
+        p = dixon(n, primes, dixon_usual)
+        assert n % p == 0
         print('Стандартный алгоритм:\n{}'.format(p))
     if '-m' in argv:
-        p = dixon_modified(n, primes)
+        p = dixon(n, primes, dixon_modified)
+        assert n % p == 0
         print('С добавлением -1 и выбором наименьшего а:\n{}'.format(p))
     if '-c' in argv:
-        p = dixon_chain(n, primes)
+        p = dixon(n, primes, dixon_chain)
+        assert n % p == 0
         print('С использованием цепных дробей:\n{}'.format(p))
 
 

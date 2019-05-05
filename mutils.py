@@ -1,5 +1,5 @@
 from random import randint
-from math import sqrt
+import decimal
 
 
 def isqrt(x):
@@ -95,18 +95,18 @@ def gen_primes(count):
 
 
 def gen_chain_fraction(p, q):
-    a = int(p / q)
+    a = p // q
     yield a
 
     while p != q:
         p, q = q, p - q * a
-        a = int(p / q)
+        a = p // q
         yield a
 
 
 def gen_square_chain_fraction(n):
-    a0 = sqrt(n)
-    r0 = int(a0)
+    a0 = decimal.Decimal(n).sqrt()
+    r0 = isqrt(n)
     yield r0
     ratio0 = 1
     numenator0 = 0
@@ -116,7 +116,7 @@ def gen_square_chain_fraction(n):
         ratio1 = (n - numenator1 * numenator1) // ratio0
         if ratio1 == 0:
             raise ValueError('Число является полным квадратом')
-        r1 = int((a0 + numenator1) / ratio1)
+        r1 = int((a0 + decimal.Decimal(numenator1)) / decimal.Decimal(ratio1))
 
         yield r1
         r0, ratio0, numenator0 = r1, ratio1, numenator1

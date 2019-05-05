@@ -8,6 +8,14 @@ def swap(mat, idx_1, idx_2, indices, ops):
     ops[idx_1], ops[idx_2] = ops[idx_2], ops[idx_1]
 
 
+def extend_list(arr1: list, arr2: list):
+    arr1.extend(arr2)
+    for el in set(arr1):
+        if arr1.count(el) % 2 == 0:
+            while el in arr1:
+                arr1.remove(el)
+
+
 def _gaussian(mat):
     indices = [idx for idx in range(len(mat))]
     ops = [[idx] for idx in range(len(mat))]
@@ -24,7 +32,7 @@ def _gaussian(mat):
         for i_xor in range(i + 1, len(mat)):
             if mat[i_xor][i] == 1:
                 mat[i_xor] = list(map(xor, mat[i_xor], mat[i]))
-                ops[i_xor].extend(ops[i])
+                extend_list(ops[i_xor], ops[i])
                 if all(map(lambda el: el == 0, mat[i_xor])):
                     sol = tuple(sorted(ops[i_xor]))
                     if sol in sols:
