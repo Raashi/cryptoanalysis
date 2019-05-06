@@ -188,15 +188,18 @@ def main():
     if '-u' in argv:
         p = dixon(n, primes, dixon_usual)
         assert n % p == 0
-        print('Стандартный алгоритм:\n{}'.format(p))
+        print('Стандартный алгоритм:\n{} * {}'.format(p, n // p)) \
+            if p != -1 else print('Делитель не найден')
     if '-m' in argv:
         p = dixon(n, primes, dixon_modified)
         assert n % p == 0
-        print('С добавлением -1 и выбором наименьшего а:\n{}'.format(p))
+        print('С добавлением -1 и выбором наименьшего а:\n{} * {}'.format(p, n // p)) \
+            if p != -1 else print('Делитель не найден')
     if '-c' in argv:
         p = dixon(n, primes, dixon_chain)
         assert n % p == 0
-        print('С использованием цепных дробей:\n{}'.format(p))
+        print('С использованием цепных дробей:\n{} * {}'.format(p, n // p)) \
+            if p != -1 else print('Делитель не найден')
 
 
 if __name__ == '__main__':

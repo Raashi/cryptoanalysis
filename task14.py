@@ -1,5 +1,3 @@
-from math import sqrt
-
 from random import randint
 from mutils import euclid, get_inverse, fac2k
 
@@ -36,6 +34,7 @@ def gen_params(bit_count):
     d = get_inverse(e, phi)
 
     write('pq.txt', '{}\n{}'.format(p, q))
+    write('phi.txt', str(phi))
     write('open.txt', '{}\n{}'.format(n, e))
     write('secret.txt', str(d))
 
